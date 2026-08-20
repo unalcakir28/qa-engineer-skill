@@ -3,6 +3,20 @@
 Semver. Her onaylı değişiklik buraya, hangi koşumun retrospektifinden geldiğiyle
 birlikte yazılır. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.5.0] — 2026-08-20
+
+Motivasyon: kullanıcı direktifi — retro notlarındaki proje-bağımlı içerik skill
+reposunda durmamalı.
+
+### Changed
+
+- **Retro artık öneri defteri, koşum günlüğü değil (Phase 7):** girdi yalnızca
+  tarih + seviye + yüzey tipiyle anılır; içerik genelleştirilmiş dersler +
+  öneriler. Genelleşemeyen ders projenin `.qa/`'sına gider. Provenance
+  istisnası KALDIRILDI — günlükler de artık proje/ticket/domain terimi içeremez.
+- Mevcut `RETROSPECTIVES.md` ve `CHANGELOG.md` girdileri bu kurala göre
+  anonimleştirildi.
+
 ## [1.4.0] — 2026-08-20
 
 Motivasyon: kullanıcı direktifi — "her test et dediğimde nasıl test edeceğini
@@ -78,8 +92,8 @@ stack) değişmeden çalışmalı.
 
 ## [1.1.0] — 2026-08-20
 
-Motivasyon: TGNL-247 L3 koşumu (tgn-network, 120 case, GO) — ilk gerçek saha
-koşumunun retrospektifi. Bkz. `RETROSPECTIVES.md` → 2026-08-20.
+Motivasyon: ilk gerçek saha koşumunun retrospektifi (2026-08-20, L3, backend
+API, 120 case, GO). Bkz. `RETROSPECTIVES.md` → 2026-08-20.
 
 ### Added
 
@@ -93,15 +107,16 @@ koşumunun retrospektifi. Bkz. `RETROSPECTIVES.md` → 2026-08-20.
   state'e dokunan grup tek başına koşar. (Koşumda 3 sahte FAIL üretmişti.)
 - **"Önce kendi harness'ını suçla" refleksi (Phase 2):** beklenmedik toplu
   FAIL'de response body loglanır, validasyon reddi ile business reddi ayrılır.
-  (Koşumda `@IsUUID()` yüzünden tüm auth çağrıları sahte 400 dönmüştü.)
+  (Koşumda format validasyonundan geçmeyen sentetik bir değer bir case grubunun
+  tamamına sahte 400 döndürmüştü.)
 - **Subagent kanıt sözleşmesi + PASS örneklemesi (Phase 2 paralel bölümü):** ham
   request/response zorunlu; yüksek riskli kategorilerden PASS örneklemi ana
   session'da yeniden koşulur; tutmayan örneklem o ajanın tüm grubunu yeniden
   doğrulatır. (Koşumda TC-099 FAIL'i subagent'ın kendi test hatası çıkmıştı.)
 - **Ortam yetenek envanteri (Phase 0):** dış bağımlılıklar tasarım anında
   gerçek/mock/yok olarak işaretlenir; yok olanların case'leri baştan
-  `BLOCKED (ortam)` alır. (Koşumda TruID gRPC'nin yokluğu koşum sırasında
-  keşfedilmişti.)
+  `BLOCKED (ortam)` alır. (Koşumda bir dış RPC bağımlılığının yokluğu koşum
+  sırasında keşfedilmişti.)
 - **Seviye sorusuna maliyet etiketi (Kickoff):** her seviye seçeneği tahmini
   case sayısı + süre/token maliyetiyle sunulur.
 - **BLOCKED borç takibi (Phase 4 + 6):** raporda "başka ortamda koşulacaklar"

@@ -1,6 +1,6 @@
 ---
 name: qa-engineer
-version: 1.4.0
+version: 1.5.0
 description: Act as the project's QA engineer before a change ships - risk analysis, a numbered test-case list written before execution using real test design techniques (boundary values, equivalence classes, decision tables, state transitions, pairwise), then executing happy path AND functional, negative, boundary, permission, state, concurrency, data-integrity, resilience and security cases, verifying each finding, and closing with a severity-ranked report and a GO / NO-GO verdict. Use whenever the user asks you to test, verify, validate, QA, "break", stress, regression-check or pre-release review a feature, endpoint, screen, flow or change - including Turkish phrasings like "test et", "kapsamli test", "test yap", "hata bulmaya calis", "kirmaya calis", "QA yap", "canliya cikmadan once kontrol et" - and whenever you have just implemented something and are about to verify it yourself. Use it even when the user only says "bunu test eder misin", because the default depth here is a full sweep, not happy-path.
 ---
 
@@ -649,11 +649,17 @@ Answer four questions, honestly and concretely (examples, not adjectives):
 
 Then act on it:
 
-- **Append one entry to `RETROSPECTIVES.md`** (in this skill's directory): date,
-  project, level, case count, verdict, the answers above in a few lines each,
-  and improvement proposals with a severity of their own (**P1** — the skill
-  caused a wrong result or a real risk; **P2** — significant wasted effort;
-  **P3** — polish).
+- **Append one entry to `RETROSPECTIVES.md`** (in this skill's directory) — but
+  keep it a *proposals ledger*, not a run diary. The run's story (what was
+  tested, which bugs, which project) already lives in that project's `.qa/`;
+  duplicating it here would smuggle project data into a project-agnostic repo.
+  An entry identifies the run only by **date + level + surface type** ("2026-08-20,
+  L3, backend API") and contains: one generalised line per lesson (same litmus
+  test as skill rules — no project, ticket, endpoint or domain term), and the
+  improvement proposals with a severity of their own (**P1** — the skill caused
+  a wrong result or a real risk; **P2** — significant wasted effort; **P3** —
+  polish). If a lesson can't be generalised, it isn't a skill lesson — it goes
+  to the project's `.qa/` instead.
 - **Propose, don't self-modify.** Present the proposals to the user in the
   closing message: what to change in `SKILL.md`/references, why (pointing at
   what happened this run), and the version bump it would imply. Apply them to
@@ -672,15 +678,16 @@ Then act on it:
   project, ticket, endpoint, table, framework-specific decorator or domain
   concept — every lesson is admitted only as its generalised pattern. The
   litmus test: *would this sentence be exactly as true in a different repo?*
-  ("sentetik truId UUID değildi" fails it; "a synthetic test value can fail
-  validation before reaching business logic — separate the two rejections"
-  passes). What can't pass the test isn't skill material — it belongs in the
+  ("the X field of the Y endpoint rejects non-UUID values" fails it; "a
+  synthetic test value can fail validation before reaching business logic —
+  separate the two rejections" passes). What can't pass the test isn't skill material — it belongs in the
   **project's** `.qa/` memory (known-issues, accepted-behaviours), which exists
   precisely to hold project-specific knowledge. Tool names are allowed only as
   per-ecosystem *menus with a selection rule* (as `automation-toolbox.md` does),
-  never as an assumed stack. Run logs (`RETROSPECTIVES.md`, `CHANGELOG.md`) are
-  the one exception: they name the motivating project/run as provenance — but
-  the rule extracted from them must always be the generalised form.
+  never as an assumed stack. This includes the logs: `RETROSPECTIVES.md` and
+  `CHANGELOG.md` identify a motivating run only by date, level and surface type
+  — never by project, ticket or domain term. The run's full story belongs to
+  that project's `.qa/`, which is where anyone needing the detail should look.
 
 ### Versioning
 
