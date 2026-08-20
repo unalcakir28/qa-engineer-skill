@@ -708,7 +708,8 @@ what changed and **which run's retrospective motivated it** — that trail is ho
 **Release:** this skill directory is a git repository (remote:
 `unalcakir28/qa-engineer-skill`, private). Every approved version bump is
 released immediately: `git commit` (message: `vX.Y.Z — <one-line summary>`),
-`git tag vX.Y.Z`, `git push --follow-tags`. Standing permission for this exists
+`git tag vX.Y.Z`, then `git push && git push origin vX.Y.Z` (`--follow-tags`
+skips lightweight tags — push the tag explicitly). Standing permission for this exists
 for **this repository only** (granted 2026-08-20) — it does not extend to any
 project repository, where commit/push still requires explicit user approval
 every time. Retrospective entries without a version bump are committed and
