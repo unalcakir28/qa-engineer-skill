@@ -34,7 +34,7 @@ Use this structure. Keep it scannable — the worst finding goes at the top.
 
 ## Bulgular (severity sırasına göre)
 
-### [S1] <short title>  ·  `TC-021`
+### [S1] <short title>  ·  `KPN-021`
 - **Nerede:** <endpoint / screen / file:line>
 - **Tekrar üretme:**
   1. <exact step, with the exact request/input>
@@ -90,9 +90,9 @@ Raporda ya dosyaya link ver ya da tabloyu buraya kopyala.
 
 | ID | Tier | Kategori | Senaryo | Beklenen | Gerçekleşen | Durum |
 |----|------|----------|---------|----------|-------------|-------|
-| TC-001 | A | Happy | ... | ... | ... | PASS |
-| TC-014 | A | Sınır | ... | ... | ... | FAIL (S2) |
-| TC-041 | C | Kritik akış smoke | ... | ... | ... | PASS |
+| KPN-001 | A | Happy | ... | ... | ... | PASS |
+| KPN-014 | A | Sınır | ... | ... | ... | FAIL (S2) |
+| KPN-041 | C | Kritik akış smoke | ... | ... | ... | PASS |
 
 ## Kapsam dışı bırakılanlar
 - <seviye gereği atlanan kategoriler — hangileri, neden>

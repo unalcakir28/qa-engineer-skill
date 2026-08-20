@@ -17,6 +17,7 @@ One file per feature/area, not per run. Runs are recorded inside it (see
 
 ```markdown
 # Test Case Listesi — Kupon indirimi
+Case ID prefix: **KPN** (proje genelinde benzersiz; çapraz referanslar `KPN-xxx`)
 Branch/commit: feature/coupon @ abc1234 | Ortam: local | Yazan: qa-engineer
 Tier planı: A=kupon indirimi · B=sipariş toplamı, stok · C=login+sipariş smoke · D=webhook
 
@@ -29,12 +30,12 @@ Toplam 47 case — 5 happy, 8 fonksiyonel, 11 negatif, 9 sınır, 4 yetki,
 
 | ID | Tier | Kategori | Senaryo | Ön koşul / veri | Adımlar | Beklenen | Durum | Kanıt |
 |----|------|----------|---------|-----------------|---------|----------|-------|-------|
-| TC-001 | A | Happy | Geçerli kupon %10 indirim uygular | aktif kupon `SAVE10`, sepet 100₺ | POST /orders (coupon=SAVE10) | 201, total=90₺, DB'de discount=10 | PASS | resp 201, order#881 |
-| TC-014 | A | Sınır | Kupon tutarı sepet toplamına eşit | kupon 100₺, sepet 100₺ | POST /orders | 201, total=0, negatife düşmez | FAIL (S2) | total=-0.01 → BUG-016 |
-| TC-021 | A | Eşzamanlılık | Aynı kupon 20 paralel istekte | tek kullanımlık kupon | 20× POST paralel | 1 başarılı, 19 reddedilir | FAIL (S1) | 3 başarılı → BUG-017 |
-| TC-033 | B | Veri bütünlüğü | İndirim iptali sonrası toplam tutarlı | TC-001'in siparişi | DELETE /orders/881 | stok geri, discount kaydı silinir | PASS | DB kontrol edildi |
-| TC-041 | C | Kritik akış | Login smoke | — | POST /auth/login | 200 + token | PASS | |
-| TC-048* | A | Keşifsel | Kupon süresi istek sırasında doluyor | kupon 5sn sonra biter | POST /orders (t=6sn) | 400 expired | PASS | koşum sırasında eklendi |
+| KPN-001 | A | Happy | Geçerli kupon %10 indirim uygular | aktif kupon `SAVE10`, sepet 100₺ | POST /orders (coupon=SAVE10) | 201, total=90₺, DB'de discount=10 | PASS | resp 201, order#881 |
+| KPN-014 | A | Sınır | Kupon tutarı sepet toplamına eşit | kupon 100₺, sepet 100₺ | POST /orders | 201, total=0, negatife düşmez | FAIL (S2) | total=-0.01 → BUG-016 |
+| KPN-021 | A | Eşzamanlılık | Aynı kupon 20 paralel istekte | tek kullanımlık kupon | 20× POST paralel | 1 başarılı, 19 reddedilir | FAIL (S1) | 3 başarılı → BUG-017 |
+| KPN-033 | B | Veri bütünlüğü | İndirim iptali sonrası toplam tutarlı | KPN-001'in siparişi | DELETE /orders/881 | stok geri, discount kaydı silinir | PASS | DB kontrol edildi |
+| KPN-041 | C | Kritik akış | Login smoke | — | POST /auth/login | 200 + token | PASS | |
+| KPN-048* | A | Keşifsel | Kupon süresi istek sırasında doluyor | kupon 5sn sonra biter | POST /orders (t=6sn) | 400 expired | PASS | koşum sırasında eklendi |
 
 ## Koşum geçmişi
 | Tarih | Commit | Koşulan | PASS | FAIL | BLOCKED | NOT RUN | Karar |
@@ -44,15 +45,20 @@ Toplam 47 case — 5 happy, 8 fonksiyonel, 11 negatif, 9 sınır, 4 yetki,
 
 ## ID rules
 
-- `TC-001` upward, zero-padded, **never renumbered**. A finding, a regression test
-  and next month's re-run all point at the same ID.
+- `<PREFIX>-001` upward, zero-padded, **never renumbered**. A finding, a
+  regression test and next month's re-run all point at the same ID.
+- **The prefix is a short unique slug of the suite** (2–4 letters, declared at
+  the top of the suite file, e.g. `KPN` for the coupon suite) — never a bare
+  `TC`. With one suite per feature, unprefixed IDs collide across suites and
+  every cross-reference (`known-issues.md`, regression tests, reports) becomes
+  ambiguous. Check the `.qa/README.md` suite index for taken prefixes.
 - New cases on a later run continue the sequence — don't reset, don't reuse the ID
   of a deleted case.
 - Suffix `*` marks a case discovered *during* execution rather than designed up
   front. Worth keeping visible: a high `*` count means Phase 1 was too shallow,
   and that's useful feedback about your own design.
-- Reference IDs everywhere: findings (`TC-021 → BUG-017`), regression tests
-  (`test_concurrent_redeem  # TC-021`), the report's coverage table.
+- Reference IDs everywhere: findings (`KPN-021 → BUG-017`), regression tests
+  (`test_concurrent_redeem  # KPN-021`), the report's coverage table.
 
 ## Status values
 

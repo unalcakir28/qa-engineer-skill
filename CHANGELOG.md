@@ -3,6 +3,25 @@
 Semver. Her onaylı değişiklik buraya, hangi koşumun retrospektifinden geldiğiyle
 birlikte yazılır. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.0] — 2026-08-20
+
+Motivasyon: kullanıcıyla `.qa/` ölçekleme değerlendirmesi — klasör büyüdükçe
+kaybolmadan arananı bulma.
+
+### Added
+
+- **`.qa/README.md` indeksi:** dosya haritası + suite tablosu (prefix, kapsanan
+  alan, case sayısı, son koşum, karar) + kapsanmamış alanlar (tier D havuzu);
+  Phase 6'da güncel tutulur. İlke: düz dosyalar + ince indeks > derin klasör
+  hiyerarşisi — bu klasörün ana tüketicisi grep'ler.
+- **Suite-prefix'li case ID'leri:** her suite dosya başında benzersiz kısa slug
+  tanımlar (`KPN-001`), çıplak `TC-` yasak — suite çoğaldıkça çapraz referans
+  belirsizliğini önler. Şablon ve örnekler güncellendi.
+- **`.qa/reports/` klasörü:** raporlar `YYYY-MM-DD-<feature>.md` adıyla buraya;
+  `.qa` kökü 6 çekirdek dosyada sabit kalır.
+- **known-issues `Alan:` etiketi:** kayıt sonsuza dek büyür; ~30-40 kayıtta alan
+  bazlı bölünme etiketler sayesinde mekanik olur.
+
 ## [1.5.0] — 2026-08-20
 
 Motivasyon: kullanıcı direktifi — retro notlarındaki proje-bağımlı içerik skill

@@ -1,6 +1,6 @@
 ---
 name: qa-engineer
-version: 1.5.0
+version: 1.6.0
 description: Act as the project's QA engineer before a change ships - risk analysis, a numbered test-case list written before execution using real test design techniques (boundary values, equivalence classes, decision tables, state transitions, pairwise), then executing happy path AND functional, negative, boundary, permission, state, concurrency, data-integrity, resilience and security cases, verifying each finding, and closing with a severity-ranked report and a GO / NO-GO verdict. Use whenever the user asks you to test, verify, validate, QA, "break", stress, regression-check or pre-release review a feature, endpoint, screen, flow or change - including Turkish phrasings like "test et", "kapsamli test", "test yap", "hata bulmaya calis", "kirmaya calis", "QA yap", "canliya cikmadan once kontrol et" - and whenever you have just implemented something and are about to verify it yourself. Use it even when the user only says "bunu test eder misin", because the default depth here is a full sweep, not happy-path.
 ---
 
@@ -284,9 +284,12 @@ When you're done designing, read the basis items backwards: any rule, acceptance
 criterion or documented promise with **no case pointing at it** is a coverage
 hole, and it goes in the report even if you chose not to test it.
 
-Every case gets a stable ID (`TC-001`, `TC-002`…) that you reuse in findings, in
-regression tests and on the next run. IDs are how "the coupon bug" becomes
-"TC-042 failed again".
+Every case gets a stable ID that you reuse in findings, in regression tests and
+on the next run. IDs are how "the coupon bug" becomes "KPN-042 failed again".
+**The ID prefix is per suite, declared at the top of the suite file** (a short
+unique slug of the feature — `KPN-001` for a coupon suite, never a bare
+`TC-001`): with one suite per feature, unprefixed numbers collide across suites
+and every cross-reference in `known-issues.md` silently becomes ambiguous.
 
 **Then show it before running.** Deliver the file and summarise it in a few
 lines: total case count, count per category, and which categories you're skipping
@@ -373,7 +376,7 @@ working blind or losing your place halfway.
 - **Track progress out loud** in a task list — one task per category group, or per
   tier — so the user can see 32/47 rather than a silent ten-minute gap.
 - **Discovered a scenario mid-run?** Append it to the list with a new ID and mark
-  it as discovered (`TC-048*`), then run it. Never execute a case that isn't in
+  it as discovered (`KPN-048*`), then run it. Never execute a case that isn't in
   the list, and never let the list drift out of sync with what you actually did.
 - Prefer real execution over reasoning about code. A status is only `PASS` if you
   observed the actual result.
@@ -500,8 +503,9 @@ severity to make a report look productive.
 
 ## Phase 4 — Report and give a verdict
 
-Write the report to a file (`test-report-<feature>-<date>.md` or the project's
-convention) and deliver it. Structure, severity rubric and templates:
+Write the report to a file — with QA memory: `.qa/reports/YYYY-MM-DD-<feature>.md`
+(never at the `.qa/` root); without: `test-report-<feature>-<date>.md` — and
+deliver it. Structure, severity rubric and templates:
 `references/reporting.md`.
 
 - Every finding: severity, one-line summary, exact repro steps, expected vs
@@ -580,6 +584,10 @@ Two minutes here is what makes the next run smarter than this one. Per
 - Refresh the `.qa/contracts/` snapshot to the shipped contract, and update
   `.qa/environment.md` with anything the run taught you about the environment
   (a dependency that turned out mocked, a new target, a changed URL).
+- **Keep `.qa/README.md` current:** update the suite index row (case count, last
+  run, verdict) and the uncovered-areas list. The index is how the next run
+  finds things without grepping the whole folder — a stale index is worse than
+  none.
 - Add any newly discovered must-never-break flow to `.qa/critical-flows.md`.
 - Record anything the user declared intended in `.qa/accepted-behaviours.md`, so
   you never report it again.

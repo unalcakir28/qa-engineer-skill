@@ -7,17 +7,35 @@ are cheap to maintain (Phase 6, two minutes) and they compound.
 
 ```text
 .qa/
+├── README.md              # the index: file map + suite table — Phase 0 starts here
 ├── critical-flows.md      # never-break flows → tier C smoke, every run
-├── known-issues.md        # every confirmed bug, forever
+├── known-issues.md        # every confirmed bug, forever (each tagged with Alan:)
 ├── accepted-behaviours.md # looks like a bug, is intended → don't report
 ├── regression-log.md      # one line per run; drives tier D rotation
 ├── environment.md         # env manifest: targets, dependency reality, access
 ├── metrics.md             # one metrics row per run; `escaped` fed by postmortems
 ├── contracts/             # public-contract snapshots for the breaking-change diff
 ├── evidence/              # raw request/response per case — NEVER committed
+├── reports/               # run reports: YYYY-MM-DD-<feature>.md (never at .qa root)
 └── suites/
-    └── <feature>.md       # the case lists (see references/case-list.md)
+    └── <feature>.md       # case lists, each with a unique ID prefix (references/case-list.md)
 ```
+
+**Scaling rules — cheap now, expensive later:**
+
+- **`README.md` is the index, not documentation.** One line per file, plus the
+  suite table: suite → prefix → area covered → case count → last run + verdict,
+  and a short "uncovered areas" list (the tier D candidate pool). Update it in
+  Phase 6; an index that drifts is worse than none. Flat files + a thin index
+  beat deep folder hierarchies — this folder's main consumer greps.
+- **Reports never live at the `.qa/` root** — always `reports/YYYY-MM-DD-<feature>.md`.
+  One report per run lands here; the root must stay six core files.
+- **Case IDs are suite-prefixed** (see `references/case-list.md`) so
+  cross-references stay unambiguous as suites multiply.
+- **Every `known-issues.md` entry carries an `Alan:` (area) tag.** The file grows
+  forever by design; when it passes ~30–40 entries, split it by area into
+  `known-issues/<area>.md` + an index — the tags make that split mechanical
+  instead of archaeological.
 
 **Version control:** `.qa/` is team memory — it belongs in git, like docs and
 tests. The one exception is `evidence/`: raw exchanges can contain tokens and
@@ -71,6 +89,7 @@ area you're testing.
 # Bilinen hatalar
 
 ## BUG-014 — Kupon eşzamanlı iki istekte iki kez uygulanıyor
+- Alan: kupon / sipariş oluşturma
 - Bulundu: 2026-08-20 | Severity: S1 | Durum: düzeltildi (commit abc1234)
 - Kök neden: kupon kullanım sayacında kilit yok
 - Kalıcı test: `tests/test_coupon.py::test_concurrent_redeem`
