@@ -322,3 +322,37 @@ sayılmalı. Onaylanırsa MINOR: v1.7.0.
   adlandırılmış bir bölüm.** Bu koşuda §6 olarak doğaçlandı; `BLOCKED (ortam)` ile aynı şey değil
   (ortam eksik değil, koşmak *başka* şeyi bozacaktı) ve devredilen borç listesine farklı bir
   gerekçeyle giriyor.
+
+### Aynı koşunun düzeltme fazı (aynı gün, 18 düzeltme)
+
+- **Bir düzeltmeyi yalnız unit testle doğrulamak, düzeltmenin hiç çalışmadığını gizleyebilir.** Bir
+  düzeltme, aynı verinin iki farklı CLR şeklinde geldiği bir yolda no-op çıktı (bellekte kurulan
+  değer vs. serileştirmeden dönen değer); düzeltilen iki yüzeyde hiç çalışmıyordu ama üçüncü yüzeyde
+  çalıştığı için tüm unit testler yeşildi. **Sadece bulguyu üreten canlı probun tekrar koşulması
+  yakaladı.** Kural: her düzeltme, bulguyu üreten prob ile — testle değil — kapatılmalı.
+- **Düzeltme fazının kendi doğrulama koşusu da yanlış alarm üretir, ve oranı yüksektir.** Bu fazda 4
+  "FAIL"ın 3'ü benim assertion hatamdı (unicode-escape'li JSON'da düz string arama, `psql`'in
+  boolean'ı `f` değil `false` yazması, eşiğe ulaşmayan test verisi). Ham çıktıyı yazdırmak üçünü de
+  dakikalar içinde ayırdı; paraphrase etseydim üçü de bulgu olarak raporlanabilirdi.
+- **Mevcut testlerin düzeltme sonrası kırılması en temiz kırmızı-yeşil kanıtıdır.** Üç düzeltmede
+  eski davranışı pinleyen testler kırıldı (biri test ADINDA eski beklentiyi taşıyordu). Bunları
+  "yeni sözleşmeye güncellemek" assertion zayıflatmak değildir — ama ayrımı raporda açıkça yazmak
+  gerekiyor, yoksa okuyucu ikisini ayırt edemez.
+- **Bir subagent, brief'te yasaklanmadığı için yıkıcı bir git komutu çalıştırdı** (`git checkout --
+  <file>`, staged olmayan değişiklikleri atan). Bu koşuda veri kaybı olmadı — koşu başındaki durum ve
+  o anki diff birlikte bunu kanıtladı — ama kanıtlamak zorunda kalmak, brief'in eksik olduğunun
+  kanıtı.
+
+**Ek öneriler:**
+
+- **P1 — Yürütücü/uygulayıcı subagent brief'ine yıkıcı komut yasağı eklenmeli.** `git checkout --`,
+  `git reset`, `git stash`, `git clean`, dosya silme: hiçbiri onay alınmadan çalıştırılmamalı, ve
+  "kendi geçici değişikliğimi geri alıyorum" bir istisna değildir (paylaşılan bir dosyada başkasının
+  kaydedilmemiş değişikliğini de alır). SKILL.md'nin subagent bölümünde tek satır.
+- **P1 — "Düzeltmeyi bulgunun kendi probuyla kapat" kuralı Phase 5'e girmeli.** Şu an Phase 5
+  "regresyon testi ekle + yeniden koş" diyor; testin *doğru şeyi* koştuğunun garantisi yok. Bulguyu
+  üreten prob, testin yerine değil, testin yanında koşulmalı.
+- **P2 — Rapor şablonu, "mevcut bir testin düzeltme sonrası kırılıp yeni sözleşmeye güncellenmesi"
+  ile "yeni yazılmış test" arasını ayırmalı.** İlki kırmızı-yeşil kanıtıdır ve en değerli satırdır;
+  aynı listede görünmeleri o kanıtı görünmez yapıyor.
+
