@@ -252,3 +252,73 @@ demiyor.
 önerileri. **Üçüncü kez tekrar eden desen:** "watch süreci ayaktayken tam derleme koşma"
 uyarısı bu koşumda fiilen zaman kaybettirdi — üç koşumdur P2 olarak duruyor, artık P1
 sayılmalı. Onaylanırsa MINOR: v1.7.0.
+
+---
+
+## 2026-09-01 — L3, backend API (ikinci giriş noktası / tool yüzeyi)
+
+- **Case:** 231 · **Sonuç:** 214 PASS / 10 FAIL (6× S2, 7× S3, 5× S4) / 3 açık soru /
+  7 NOT RUN-BLOCKED · **Karar:** NO-GO · **Skill sürümü:** 1.6.0 · **Yürütme:** 7 paralel
+  Sonnet grubu + lider doğrulaması
+
+**Genelleştirilmiş dersler:**
+
+- **Katalog satırı 15 (hata tahmini / keşif) koşunun en ciddi üç bulgusunu tek başına üretti**
+  (6 case → 3 FAIL, hepsi S2). Matrisin üretebildiği kategoriler yüzeyin sözleşmesini doğruladı;
+  sözleşmenin *kendi içinde tutarsız* olduğu yerleri yalnızca timeboxed keşif buldu. Satır 15'in
+  "always" işaretini hak ettiğinin en net kanıtı.
+- **Bir okuma yolunda güvenli olan bir sınır/guard, yazma yolunda ters etki yapar.** Yanıtı
+  reddetmek okumada "eksik cevap verme" demektir; yazmada "yan etki gerçekleşti ama olmadı denildi"
+  üretir — çağıran tekrar dener ve yinelenen kayıt oluşur. Koşunun en ciddi bulgusu buydu ve hiçbir
+  kategori satırı bunu doğrudan sormuyor.
+- **Bir feature mevcut mantığa ikinci bir giriş noktası eklediğinde, iki giriş noktasının BEYAN
+  ETTİĞİ korumaları kaynak seviyesinde diff'lemek gerekiyor.** Siyah kutu testi "reddedildi mi"
+  sorusunu cevaplar, "doğru koruma mı seçildi" sorusunu cevaplamaz. Bu diff bir yetki yükseltme
+  bulgusu (S2) üretti: bir gövde alanı, kendisi için ayrı bir izin tanımlanmış bir lifecycle
+  geçişini daha zayıf bir izinle tetikliyordu.
+- **Aynı veri sınıfı için iki maskeleme/koruma yüzeyi varsa, biri eksiktir.** İki yüzeyin
+  uyuşmazlığı bulgunun kendisi olur ve tartışmayı bitirir: "kasıtlı mı" sorusuna, projenin aynı
+  değeri başka yerde maskelemesi cevap verir.
+- **Aynı sınıftaki iki girdi farklı zamanlarda doğrulanıyorsa, geç doğrulanan sessizce üretime
+  kaçar.** Bir tür referans create anında reddedilirken kardeşi yalnızca çalışma anında
+  başarısız oluyordu — ve dry-run doğrulama aracı ikincisine temiz rapor veriyordu.
+- **Paralel yürütmede fixture izolasyonu VERİYLE SINIRLI KALMAMALI: kimlik ve yetki nesneleri de
+  izole olmalı.** İki grup aynı yetki grubunu mutasyona uğratacak şekilde görevlendirilmişti; koşu
+  ortasında düzeltme mesajı göndermek gerekti. Sahte FAIL riski en pahalı olduğu kategoride
+  (güvenlik/yetki) doğuyor.
+- **Yürütücülere verilen brief'te adı geçen her ortak artefakt, dispatch'ten ÖNCE gerçekten
+  yazıyor mu diye kontrol edilmeli.** Brief'te "her çağrı şu dosyaya birikir" denen dosyaya
+  harness hiç yazmıyordu; bir ajan profili elle yeniden kurmak için ciddi efor harcadı.
+- **Ortak, case-id başına otomatik kanıt arşivleyen bir harness'i dispatch'ten önce kurmak,
+  "her case için ham kanıt" kuralını disiplin meselesinden bedava bir yan etkiye çevirdi.** 7 grup
+  boyunca tek bir "kanıt yok" durumu çıkmadı.
+- **Kendi vaka listem 3 sahte FAIL üretti:** yanlış bir sabit değer beklentisi, var olmayan bir
+  şema kolonunun varsayılması, ve kurulum adımının hatasını yutan bir script. Üçü de Phase 3'te
+  öldü — ama üçü de vaka tasarımı sırasında, tek bir "beklentiyi nereden aldım" sorusuyla
+  önlenebilirdi.
+- **Eksik bir özelliği hata olarak raporlama baskısı gerçek:** hiçbir yerde vaat edilmemiş bir
+  tekillik kuralının yokluğu, bir yürütücü tarafından "dokümanla çelişiyor" diye raporlandı.
+  "Dayanak yoksa bulgu değil, açık sorudur" kuralı bunu tuttu.
+
+**Öneriler:**
+
+- **P1 — Fixture izolasyon kuralını kimlik/yetki nesnelerine genişlet.** SKILL.md'nin paralel
+  yürütme bölümündeki "her ajan kendi izole fixture setini seed eder" maddesi yalnız veriden
+  bahsediyor. Kimlik, rol, izin grubu, API anahtarı gibi *yetkilendirme* nesneleri de aynı kurala
+  girmeli; aksi halde iki grup birbirinin izin durumunu değiştirir ve sahte FAIL tam olarak
+  güvenlik kategorisinde çıkar. (Bu koşuda koşu ortasında düzeltme gerekti.)
+- **P1 — `references/oracles.md`'ye yeni bir sezgi: "ikinci giriş noktası diff'i".** Bir feature
+  mevcut mantığa ikinci bir giriş noktası (tool yüzeyi, kuyruk tüketicisi, batch iş, admin CLI)
+  eklediğinde, o giriş noktasının beyan ettiği korumaları birincinin beyanlarıyla kaynak seviyesinde
+  karşılaştır. Siyah kutu "reddedildi mi"yi görür, "doğru koruma mı"yı görmez. Bu koşuda S2 üretti.
+- **P2 — `references/oracles.md`'ye: "okuma yolunda doğrulanmış bir sınır, yazma yolunda yeniden
+  test edilmeli".** Guard/limit/kesme davranışları yan etkinin öncesinde mi sonrasında mı çalıştığı
+  sorusuyla birlikte test edilmeli; yan etkiden sonra reddetmek "sessizce tamamlandı ama başarısız
+  raporlandı" üretir. Bu koşunun en ciddi bulgusu.
+- **P2 — Phase 2'ye bir satır: paralel dispatch'ten önce ortak harness'i ve brief'te adı geçen her
+  ortak artefaktı bir çağrıyla doğrula.** İsmi geçen ama yazmayan bir dosya, ajan başına ölçülebilir
+  efor kaybı demek.
+- **P3 — Rapor şablonuna "paylaşılan durumu mutasyona uğrattığı için koşulmayan süitler" için
+  adlandırılmış bir bölüm.** Bu koşuda §6 olarak doğaçlandı; `BLOCKED (ortam)` ile aynı şey değil
+  (ortam eksik değil, koşmak *başka* şeyi bozacaktı) ve devredilen borç listesine farklı bir
+  gerekçeyle giriyor.
