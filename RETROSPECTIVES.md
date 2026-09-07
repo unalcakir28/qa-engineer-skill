@@ -356,3 +356,74 @@ sayılmalı. Onaylanırsa MINOR: v1.7.0.
   ile "yeni yazılmış test" arasını ayırmalı.** İlki kırmızı-yeşil kanıtıdır ve en değerli satırdır;
   aynı listede görünmeleri o kanıtı görünmez yapıyor.
 
+
+---
+
+## 2026-09-07 · L3 · tarayıcı içi LLM istemcisi + web frontend (düzeltme modu açık)
+
+**Yakalananlar (yapı sayesinde):**
+
+- **Kategori katalogunun "yerelleştirme/uç veri" satırı,** özellik listesinde hiç geçmeyen bir
+  belge-dili hatası buldu: belge dili UI dilini takip etmediği için CSS `uppercase` yanlış dilin
+  büyük harf kurallarını uyguluyordu ve dilin en sık harflerinden biri bozuk basılıyordu. Hiçbir
+  fonksiyonel senaryo buna bakmaz; satır olduğu için bakıldı.
+- **"Basis'i kaynak koddaki niyet yorumlarından da oku" yaklaşımı** iki S2'yi doğrudan üretti. Bu
+  kod tabanında niyet yorumlarda açıkça yazılı olduğu için karşılaştırma yapılabildi: yorumun
+  vaat ettiği ile kodun yaptığı arasındaki fark, dokümansız bir projede görünmez olurdu.
+- **"Beklenmeyen FAIL kümesinde önce kendi harness'ından şüphe et"** kuralı üç kez ateşlendi ve
+  üçünde de haklıydı (maskeleme regex'i kendi kontrol alanını gizledi; yerinde mutate edilen bir
+  dizi assertion'ı bozdu; paylaşılan bir test yardımcısı prop'u yutuyordu). Üçü de rapora hiç
+  girmedi.
+
+**Maliyet/gürültü:**
+
+- **Seviye tablosu, "yürütmesi para yakan sistem" durumunu hiç hesaba katmıyor.** Burada her
+  senaryo gerçek bir ücretli model çağrısıydı. Case listesi yürütme maliyetine göre sınıflandırıldı
+  (deterministik / arayüz / ücretli) ve derinlik ucuz olan yere kaydırıldı — bu doğaçlamaydı, kural
+  değil.
+- **Aynı koşuda "hepsini düzelt" modu, kapsamı sessizce takas etti.** 12 bulgunun 11'i kapandı ama
+  tasarlanan 122 case'in 57'si hiç koşulmadı; eşzamanlılık, dayanıklılık ve keşif charter'larının
+  **tamamı** koşulmayanlar arasında. Seviye tablosu L3 için "60-120 case koşulur" diyor; bu koşu o
+  vaadi tuttuğu izlenimi veriyor ama tutmuyor.
+
+**Doğaçlananlar (kural olmalı):**
+
+- Bağımlılığın **ilan ettiği** yetenekler ile istemcinin **tükettiği** yetenekler arasında kaynak
+  seviyesinde fark alma. Bu koşunun en ciddi bulgusu buradan çıktı ve siyah kutuya tamamen
+  görünmezdi: hiçbir şey hata vermiyordu, sistem yalnızca sessizce kötü çalışıyordu.
+- Değiştirilen bir varsayılan/fabrika fonksiyonu için, **o fabrikayı mock'layan testleri** ara.
+  Tam olarak onlar yeşil kalacak testlerdir.
+
+**Zorlanan non-negotiable:**
+
+- **#4 (mevcut davranışı değil niyeti test et)** iki yerde zorlandı ve ikisi farklı sebepten:
+  (a) mevcut bir test hatalı davranışı bilinçli olarak pinlemişti (yorumu bunu açıkça yazıyordu);
+  (b) yazılı basis'in kendisi, sonradan gelen bir kullanıcı kararıyla geçersiz kılınmıştı ve dosya
+  bunu bilmiyordu. İkincisi kuralda hiç ele alınmamış bir durum.
+
+**Öneriler:**
+
+- **P1 — "Basis bayat olabilir" kuralı, `references/oracles.md` ve Phase 0'a.** Yazılı bir basis
+  (plan, spec, tasarım kararı) projedeki **sonraki** bir talimatla geçersiz kılınmış olabilir. Basis
+  bir artefakt ise, onu geçersiz kılan daha yeni bir karar var mı diye kontrol et; varsa en yeni
+  karar geçerlidir ve bulgu **koda değil dokümana** yazılır ("plan bu noktada bayat"). Aksi halde
+  doğru kod, güvenle FAIL raporlanır. SKILL.md Phase 0 zaten "basis'in kendisi kusurlu olabilir"
+  diyor ama yalnız *çelişki/eksiklik* için; *sonradan geçersiz kılınma* farklı bir durum ve daha
+  sinsi.
+- **P1 — `references/oracles.md`'ye yeni sezgi: "ilan edilen yetenek / tüketilen yetenek diff'i".**
+  Sistem, yeteneklerini ilan eden bir bağımlılıkla konuşuyorsa (protokol yetenekleri, şema
+  ipuçları, annotation'lar, olay tipleri, sayfalama meta'sı, cache başlıkları), ilan edilenlerin
+  hangilerinin kodda **tüketildiğini** kaynak seviyesinde karşılaştır. Tüketilmeyen bir ilan hata
+  vermez; sistem yalnızca sessizce kötü çalışır — ve bağımlılığın dokümanı istemciyi o yola
+  yönlendiriyorsa, tüketici o talimatı izleyemez.
+- **P2 — Seviye tablosuna yürütme maliyeti boyutu.** Kickoff'ta, yürütmesi para yakan (ücretli API,
+  gerçek dış çağrı, uzun süren iş) senaryolar için case'leri maliyet sınıfına ayır ve derinliği
+  ucuz sınıfa kaydır. Rapor, koşulan case'lerin maliyet dağılımını da yazsın — yoksa "L3 koştum"
+  ifadesi maliyeti çok farklı iki koşu için aynı şeyi ifade ediyor.
+- **P2 — "L3 + düzeltme modu" için açık bir uyarı.** İkisi aynı koşuda seçildiğinde, kickoff'ta
+  kapsamın takas edileceği **söylenmeli** ("keşif mi kapanış mı önce?") ya da koşu ikiye
+  bölünmeli. Şu anki metin bu kombinasyonun kapsam üzerindeki etkisini hiç anmıyor.
+- **P3 — Değişen bir varsayılan/fabrika için "o fabrikayı mock'layan testleri ara" satırı,**
+  Phase 0'ın mevcut testleri okuma maddesine. Bu koşuda gerçek bir kör nokta buldu: 35 test
+  fabrikayı mock'layıp değişen alanı enjekte ediyordu, dolayısıyla değişikliğin kırdığı hiçbir şey
+  görünmeyecekti.
