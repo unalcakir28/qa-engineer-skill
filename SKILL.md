@@ -1,7 +1,7 @@
 ---
 name: qa-engineer
-version: 1.6.0
-description: Act as the project's QA engineer before a change ships - risk analysis, a numbered test-case list written before execution using real test design techniques (boundary values, equivalence classes, decision tables, state transitions, pairwise), then executing happy path AND functional, negative, boundary, permission, state, concurrency, data-integrity, resilience and security cases, verifying each finding, and closing with a severity-ranked report and a GO / NO-GO verdict. Use whenever the user asks you to test, verify, validate, QA, "break", stress, regression-check or pre-release review a feature, endpoint, screen, flow or change - including Turkish phrasings like "test et", "kapsamli test", "test yap", "hata bulmaya calis", "kirmaya calis", "QA yap", "canliya cikmadan once kontrol et" - and whenever you have just implemented something and are about to verify it yourself. Use it even when the user only says "bunu test eder misin", because the default depth here is a full sweep, not happy-path.
+version: 1.7.0
+description: Act as the project's QA engineer before a change ships - risk analysis, a numbered case list designed with real test techniques (boundary values, equivalence classes, decision tables, pairwise), execution across functional, negative, boundary, permission, state, concurrency, data-integrity, resilience and security categories, every finding verified, closing with a severity-ranked report and a GO / NO-GO verdict. Use whenever the user asks to test, verify, validate, QA, break, stress, regression-check or pre-release review a feature, endpoint, screen, CLI command or change - including Turkish phrasings like "test et", "kapsamli test", "kirmaya calis", "QA yap" - and whenever you have just implemented something and are about to verify it. The default depth is a full sweep, not happy-path.
 ---
 
 # QA Engineer
@@ -135,21 +135,12 @@ not execute is `NOT RUN`, never a guessed verdict.
 ### Run modes beyond the default
 
 Two variants of the same process, not separate processes — every rule above
-still applies:
+still applies. Read `references/run-modes.md` when either fits:
 
-- **PR mode** — the user points you at a pull request ("bu PR'ı test et"). Tier
-  A is the PR's diff; run the normal phases at the chosen level. In addition to
-  the standard report, produce a condensed PR-comment version: verdict, top
-  findings with case IDs, one-line coverage summary, link to the full report.
-  Post it to the PR only with the user's explicit approval — a review comment is
-  outward-facing.
-- **Sentinel mode** — the user has wired the skill to a scheduler (cron, CI).
-  Unattended defaults apply: **L2, report-only**, stated at the top of the
-  report. Scope: tier C critical-flow smoke + tier D rotation, plus tier A for
-  whatever changed since the last logged run. Write the report and update the
-  QA memory as usual; lead with any S1/S2 so it's the first thing a human sees;
-  leave retrospective proposals as `ÖNERİ — onay bekliyor`. Never fix code,
-  never prune data, never post anywhere external while unattended.
+- **PR mode** — the user points you at a pull request ("bu PR'ı test et"): tier A
+  is the diff, plus a condensed PR-comment version of the report.
+- **Sentinel mode** — the skill is wired to a scheduler and nobody is there to
+  answer: L2, report-only, nothing outward-facing.
 
 ---
 
@@ -345,6 +336,15 @@ Then read the checklist for the surface you're testing and merge in what applies
 
 - `references/backend-api.md` — endpoints, services, business rules, DB.
 - `references/web-frontend.md` — screens, forms, flows, browser behaviour.
+- `references/cli-tool.md` — command-line tools, binaries and anything whose
+  contract is exit code + stdout + stderr + what it did to the disk.
+
+**The surface decides which categories are real.** A command-line tool with no
+accounts has no row 7 to walk, and its row 13 lives in parsing untrusted files
+rather than in injected requests; a pure library has no row 17. Judging a
+category out is legitimate — judging it out *silently* is not. Name it once in
+the report with the reason, then spend the saved effort on the categories that
+surface actually exposes (for a filesystem tool: rows 11, 12, 9 and 19).
 
 Also merge in, from QA memory: every past bug in `.qa/known-issues.md` that could
 plausibly recur here (a bug found once is the cheapest bug to find twice), and
@@ -438,42 +438,14 @@ working blind or losing your place halfway.
 ### Parallelising a large list
 
 A 60-case list executed in one context degrades near the end — attention drifts
-to wrapping up. At **L3** (and any L2 run that grew past ~40 cases), split
-execution by **category group** across Sonnet subagents, one agent each,
-reporting back as structured statuses and evidence:
+to wrapping up. At **L3**, and on any L2 run that grew past ~40 cases, split
+execution by category group across Sonnet subagents. The group split, the
+fixture-isolation rule and the two rules that keep a parallel run honest (raw
+evidence per case; a subagent's PASS is a claim, sample-verify it) are in
+`references/run-modes.md` — read it before delegating.
 
-1. auth, permissions, tenancy (7)
-2. validation, boundaries, equivalence, combinations (3–6)
-3. state, sequence, concurrency, idempotency (8–9)
-4. data integrity, migration, observability (10, 19, 20)
-5. resilience, error handling, security probes (12, 13)
-6. functional mechanics, happy path, UI/localisation (1, 2, 17, 18)
-7. regression, integration, critical-flow smoke (14, tier C)
-
-Give each agent the case-list rows it owns, the environment facts it needs, and
-the evidence rule (real command, real output, status per row). Merge the results
-yourself, run Phase 3 verification on the strong model, and keep ownership of the
-verdict — you are the one signing the report.
-
-Three rules that keep a parallel run honest:
-
-- **Each agent seeds its own isolated fixture set** (own org/tenant/user/records,
-  prefixed identifiers). Parallel agents must never share mutable test data — one
-  agent's state-transition case silently breaks another agent's assertion, and
-  the resulting FAILs look exactly like real bugs. If a group *must* mutate
-  shared or global state (DDL, config, a shared counter), run that group alone,
-  not in parallel.
-- **Raw evidence is part of the contract.** Require each agent to return, per
-  case, the actual request and response (or command and output) — not a
-  paraphrase. Without the raw exchange you cannot tell a real FAIL from the
-  agent's own malformed request, or a real PASS from a request that hit the
-  wrong endpoint and got a cheerful 200.
-- **A subagent's word is a claim, not a result — in both directions.** Every FAIL
-  gets re-run by you before it becomes a finding (Phase 3). And a wrong PASS is
-  just as possible as a wrong FAIL: sample-verify a few PASS rows from the
-  highest-risk categories (money, permissions, state, concurrency) by re-running
-  them yourself. If a sampled PASS doesn't hold, re-verify that agent's entire
-  group.
+You merge the results, run Phase 3 verification yourself, and keep ownership of
+the verdict. You are the one signing the report.
 
 ---
 
@@ -549,22 +521,6 @@ deliver it. Structure, severity rubric and templates:
   fixes create bugs. Re-issue the verdict afterwards.
 - Update the report: what was fixed, which verdicts flipped, what remains open.
 
-## Phase 6.5 — After the deploy *(when the user ships and asks)*
-
-The release isn't verified until it's verified in the place that matters. Two
-cheap, non-mutating checks, both detailed in `references/release-gate.md`:
-
-- **Read-only prod smoke** minutes after deploy — health/readiness, an auth round
-  trip, the critical flows' read paths, using a dedicated internal test tenant.
-  Read-only or idempotent only; this is the sole exception to the no-production
-  rule, and only on the user's request.
-- **New-error-signature diff** — error fingerprints after the deploy vs. before.
-  A signature that appears only afterwards is the release breaking something for
-  a cohort too small to move the average error rate.
-
-If either fails, the recommendation is roll back (or flip the flag off) first and
-diagnose second.
-
 ## Phase 6 — Update the QA memory
 
 Two minutes here is what makes the next run smarter than this one. Per
@@ -610,30 +566,27 @@ Two minutes here is what makes the next run smarter than this one. Per
 
 ---
 
+## Phase 6.5 — After the deploy *(when the user ships and asks)*
+
+The release isn't verified until it's verified in the place that matters. Two
+cheap, non-mutating checks — a read-only prod smoke minutes after the deploy, and
+a new-error-signature diff against the hours before it. Both are detailed in
+`references/release-gate.md`, including the one narrow exception to the
+no-production rule that the smoke relies on.
+
+If either fails, the recommendation is roll back (or flip the flag off) first and
+diagnose second.
+
 ## Escaped bugs — the postmortem loop
 
 The real scorecard of a QA process is not the bugs it found; it's the ones that
-got past it. When the user reports a bug discovered in production (or anywhere
-downstream of a run that should have caught it), run this loop — alongside
-fixing it, if asked, never instead:
+got past it. When the user reports a bug discovered in production — or anywhere
+downstream of a run that should have caught it — work the loop in
+`references/postmortem.md`: attribute the miss to a run, name its cause (design
+gap / false PASS / known but parked / out of scope), close the hole with a
+regression case, and generalise it into a proposal if it would recur elsewhere.
 
-1. **Attribute it.** Which past run owned the surface this bug lives in? Which
-   catalogue category and tier would have caught it?
-2. **Diagnose the miss** — exactly one of these, named in writing:
-   - *Design gap*: no case pointed at it → the technique or catalogue walk
-     failed. Why did the matrix not generate it?
-   - *False PASS*: a case covered it and passed → the assertion was hollow, the
-     fixture was wrong, or a subagent's word was taken untested.
-   - *Known but parked*: it was `BLOCKED`/`NOT RUN` and never re-queued → the
-     debt-tracking failed.
-   - *Out of scope*: the level or tier plan excluded the area → was that
-     exclusion reasonable with what was known then? (Sometimes yes — say so.)
-3. **Close the hole.** Write the regression case with a new ID into the suite,
-   add the bug to `.qa/known-issues.md`, and increment the `escaped` column of
-   the run that missed it in `.qa/metrics.md`.
-4. **Generalise.** If the miss pattern would recur in other projects, it's a
-   prima facie **P1** proposal in `RETROSPECTIVES.md` — an escaped bug teaches
-   more than ten found ones, precisely because it beat the whole process.
+Run it alongside fixing the bug if fixing was asked for, never instead of it.
 
 ---
 
@@ -655,73 +608,24 @@ Answer four questions, honestly and concretely (examples, not adjectives):
 4. **Did any non-negotiable get strained?** If a hard rule was hard to follow,
    that's information about the rule, not just about the run.
 
-Then act on it:
+Then act on it. Two rules govern what happens next; the mechanics —
+`RETROSPECTIVES.md` entry format, proposal severities, semver rules and the
+release procedure — are in `references/skill-maintenance.md`.
 
-- **Append one entry to `RETROSPECTIVES.md`** (in this skill's directory) — but
-  keep it a *proposals ledger*, not a run diary. The run's story (what was
-  tested, which bugs, which project) already lives in that project's `.qa/`;
-  duplicating it here would smuggle project data into a project-agnostic repo.
-  An entry identifies the run only by **date + level + surface type** ("2026-08-20,
-  L3, backend API") and contains: one generalised line per lesson (same litmus
-  test as skill rules — no project, ticket, endpoint or domain term), and the
-  improvement proposals with a severity of their own (**P1** — the skill caused
-  a wrong result or a real risk; **P2** — significant wasted effort; **P3** —
-  polish). If a lesson can't be generalised, it isn't a skill lesson — it goes
-  to the project's `.qa/` instead.
-- **Propose, don't self-modify.** Present the proposals to the user in the
-  closing message: what to change in `SKILL.md`/references, why (pointing at
-  what happened this run), and the version bump it would imply. Apply them to
-  the skill files **only with the user's approval** — the skill's rules were
-  approved once; changing them silently would make every past approval
-  meaningless. If the user is absent (unattended run), leave the proposals in
-  `RETROSPECTIVES.md` marked `ÖNERİ — onay bekliyor` and surface them at the
-  start of the next attended run.
-- **Check the backlog first:** before proposing, re-read the open proposals in
-  `RETROSPECTIVES.md`. A proposal that recurs across runs is prima facie P1 —
-  say so. A proposal that a later run proved unnecessary gets closed with a
-  note, not silently dropped.
-- **Generalise before you propose — the skill stays project-agnostic.** This
-  skill must work unchanged on any project: frontend or backend, any language,
-  any framework, any domain. So `SKILL.md` and `references/` never name a
-  project, ticket, endpoint, table, framework-specific decorator or domain
-  concept — every lesson is admitted only as its generalised pattern. The
-  litmus test: *would this sentence be exactly as true in a different repo?*
-  ("the X field of the Y endpoint rejects non-UUID values" fails it; "a
-  synthetic test value can fail validation before reaching business logic —
-  separate the two rejections" passes). What can't pass the test isn't skill material — it belongs in the
-  **project's** `.qa/` memory (known-issues, accepted-behaviours), which exists
-  precisely to hold project-specific knowledge. Tool names are allowed only as
-  per-ecosystem *menus with a selection rule* (as `automation-toolbox.md` does),
-  never as an assumed stack. This includes the logs: `RETROSPECTIVES.md` and
-  `CHANGELOG.md` identify a motivating run only by date, level and surface type
-  — never by project, ticket or domain term. The run's full story belongs to
-  that project's `.qa/`, which is where anyone needing the detail should look.
-
-### Versioning
-
-The skill carries a semver `version` in the front-matter and a `CHANGELOG.md`
-next to this file. On every **approved** change:
-
-- **PATCH** (1.1.x): wording, clarification, reference-file edits that don't
-  change behaviour.
-- **MINOR** (1.x.0): a new rule, a new phase step, a changed default — anything
-  that alters how a run behaves.
-- **MAJOR** (x.0.0): restructuring the phase model or redefining verdict/level
-  semantics.
-
-Bump the front-matter version and add a dated `CHANGELOG.md` entry describing
-what changed and **which run's retrospective motivated it** — that trail is how
-"the skill is improving" stays a measurable claim instead of a feeling.
-
-**Release:** this skill directory is a git repository (remote:
-`unalcakir28/qa-engineer-skill`, private). Every approved version bump is
-released immediately: `git commit` (message: `vX.Y.Z — <one-line summary>`),
-`git tag vX.Y.Z`, then `git push && git push origin vX.Y.Z` (`--follow-tags`
-skips lightweight tags — push the tag explicitly). Standing permission for this exists
-for **this repository only** (granted 2026-08-20) — it does not extend to any
-project repository, where commit/push still requires explicit user approval
-every time. Retrospective entries without a version bump are committed and
-pushed too (no tag), so the log never lives only on one machine.
+- **Propose, don't self-modify.** Present the proposals in the closing message:
+  what to change, why (pointing at what happened this run), and the version bump
+  it implies. Apply them to the skill files **only with the user's approval** —
+  the rules were approved once, and changing them silently would make every past
+  approval meaningless. Unattended: leave them marked `ÖNERİ — onay bekliyor`.
+- **Generalise before you propose — the skill stays project-agnostic.** It must
+  work unchanged on any project: frontend, backend or command-line tool; any
+  language, framework or domain. So `SKILL.md` and `references/` never name a
+  project, ticket, endpoint, table or domain concept. The litmus test: *would
+  this sentence be exactly as true in a different repo?* ("the X field of the Y
+  endpoint rejects non-UUID values" fails; "a synthetic test value can fail
+  validation before reaching business logic — separate the two rejections"
+  passes.) What fails the test isn't skill material — it belongs in the
+  **project's** `.qa/` memory, which exists precisely to hold it.
 
 ---
 

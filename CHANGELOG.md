@@ -3,6 +3,38 @@
 Semver. Her onaylı değişiklik buraya, hangi koşumun retrospektifinden geldiğiyle
 birlikte yazılır. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.7.0] — 2026-09-14
+
+Motivasyon: koşum retrospektifi değil — skill'in kendisinin gözden geçirilmesi
+(kullanıcı isteğiyle, yapı ve maliyet denetimi).
+
+### Added
+
+- **`references/cli-tool.md`:** üçüncü yüzey checklist'i — komut satırı araçları
+  ve ikili dosyalar. Sözleşme çıkış kodu + stdout/stderr + diske yapılan iş
+  olarak tanımlanır; argüman ayrıştırma, dosya sistemi düşman girdileri
+  (symlink döngüsü, sparse, NFC/NFD, izin hataları, ölü mount), sinyal ve
+  iptal, akış/pipe/TTY davranışı, config önceliği, ayrıcalık sınırları,
+  çapraz platform ve paketleme bölümleri. Daha önce yalnızca `backend-api` ve
+  `web-frontend` vardı — CLI yüzeyi tamamen kapsam dışıydı.
+- **Yüzey kategoriyi belirler kuralı (Phase 1):** bir kategori geçerli değilse
+  gerekçesiyle bir kez yazılır; sessizce atlanmaz, boş case de üretilmez.
+
+### Changed
+
+- **Phase 6.5 yanlış yerdeydi:** dosyada Phase 6'dan *önce* geliyordu. Phase
+  6'dan sonraya alındı ve `release-gate.md`'ye işaret eden üç satıra indirildi.
+- **Soğuk bölümler `references/`'a taşındı** — SKILL.md 7.773 → 6.851 kelime
+  (her tetiklenmede yüklenen maliyet; ~1.450 kelime taşındı, yerine ~250 kelime
+  işaretçi ve ~130 kelime yeni kural girdi). Taşınanlar: PR/Sentinel koşum modları ve
+  paralel koşum kuralları → `run-modes.md`; kaçan bug postmortem döngüsü →
+  `postmortem.md`; retrospektif girdi formatı, genelleme testi, semver ve
+  release yordamı → `skill-maintenance.md`. Hepsinin yerinde tek satırlık
+  işaretçi var; hiçbiri normal bir koşumun sıcak yolunda değildi.
+- **`description` 1008 → 797 karakter.** 1024 sınırına 16 karakter kalmıştı;
+  eş anlamlı Türkçe tetikleyiciler ("test yap", "hata bulmaya calis",
+  "canliya cikmadan once kontrol et") budandı, "CLI command" eklendi.
+
 ## [1.6.0] — 2026-08-20
 
 Motivasyon: kullanıcıyla `.qa/` ölçekleme değerlendirmesi — klasör büyüdükçe

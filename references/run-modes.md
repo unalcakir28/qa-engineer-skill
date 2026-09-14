@@ -1,0 +1,67 @@
+# Run modes and parallel execution
+
+Variants of the default process, not separate processes — every non-negotiable,
+every phase and every evidence rule in `SKILL.md` still applies.
+
+## PR mode
+
+The user points at a pull request ("bu PR'ı test et").
+
+- Tier A is the PR's diff; run the normal phases at the chosen level.
+- In addition to the standard report, produce a condensed PR-comment version:
+  verdict, top findings with case IDs, one-line coverage summary, link to the
+  full report.
+- Post it to the PR **only with the user's explicit approval** — a review comment
+  is outward-facing.
+
+## Sentinel mode
+
+The skill is wired to a scheduler (cron, CI) and nobody is there to answer.
+
+- Unattended defaults apply: **L2, report-only**, stated at the top of the report.
+- Scope: tier C critical-flow smoke + tier D rotation, plus tier A for whatever
+  changed since the last logged run.
+- Write the report and update the QA memory as usual; lead with any S1/S2 so it
+  is the first thing a human sees.
+- Leave retrospective proposals as `ÖNERİ — onay bekliyor`.
+- Never fix code, never prune data, never post anywhere external while unattended.
+
+## Parallelising a large list
+
+A 60-case list executed in one context degrades near the end — attention drifts
+to wrapping up. At **L3** (and any L2 run that grew past ~40 cases), split
+execution by **category group** across Sonnet subagents, one agent each,
+reporting back as structured statuses and evidence:
+
+1. auth, permissions, tenancy (7)
+2. validation, boundaries, equivalence, combinations (3–6)
+3. state, sequence, concurrency, idempotency (8–9)
+4. data integrity, migration, observability (10, 19, 20)
+5. resilience, error handling, security probes (12, 13)
+6. functional mechanics, happy path, UI/localisation (1, 2, 17, 18)
+7. regression, integration, critical-flow smoke (14, tier C)
+
+Give each agent the case-list rows it owns, the environment facts it needs, and
+the evidence rule (real command, real output, status per row). Merge the results
+yourself, run Phase 3 verification on the strong model, and keep ownership of the
+verdict — you are the one signing the report.
+
+Three rules that keep a parallel run honest:
+
+- **Each agent seeds its own isolated fixture set** (own org/tenant/user/records,
+  prefixed identifiers). Parallel agents must never share mutable test data — one
+  agent's state-transition case silently breaks another agent's assertion, and
+  the resulting FAILs look exactly like real bugs. If a group *must* mutate
+  shared or global state (DDL, config, a shared counter), run that group alone,
+  not in parallel.
+- **Raw evidence is part of the contract.** Require each agent to return, per
+  case, the actual request and response (or command and output) — not a
+  paraphrase. Without the raw exchange you cannot tell a real FAIL from the
+  agent's own malformed request, or a real PASS from a request that hit the
+  wrong endpoint and got a cheerful 200.
+- **A subagent's word is a claim, not a result — in both directions.** Every FAIL
+  gets re-run by you before it becomes a finding (Phase 3). And a wrong PASS is
+  just as possible as a wrong FAIL: sample-verify a few PASS rows from the
+  highest-risk categories (money, permissions, state, concurrency) by re-running
+  them yourself. If a sampled PASS doesn't hold, re-verify that agent's entire
+  group.
