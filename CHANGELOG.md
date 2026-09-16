@@ -3,6 +3,59 @@
 Semver. Her onaylı değişiklik buraya, hangi koşumun retrospektifinden geldiğiyle
 birlikte yazılır. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.8.0] — 2026-09-16
+
+Motivasyon: 2026-09-16 L3 koşumunun retrospektifi (backend API, güvenlik sınırı
+düzeltmesi, koşumu yapan kişi aynı zamanda değişikliği yazan kişiydi).
+
+### Added
+
+- **`references/techniques.md` §11 — diferansiyel (A/B) yürütme.** Değişiklik
+  öncesi build, mevcut build'in yanında **aynı** veri deposuna karşı ayağa
+  kaldırılır ve atıf gerektiren her prob iki kez koşulur. "Bu bulguyu ben mi
+  yarattım" sorusu tartışma olmaktan çıkıp ölçüme dönüşür; dokunulmaması gereken
+  yüzeylerin bayt bayt karşılaştırması tasarlanmamış bir regresyon taraması
+  verir; temel build zaten düzeltme öncesi kod olduğu için kırmızı-yeşil kanıtı
+  bedava gelir. Temelin geçerliliğini (hangi commit'ten / hangi zamandan) ilk
+  sonuçtan **önce** kanıtlama zorunluluğu kuralın parçası — aksi halde tüm
+  "önceden var" etiketleri dayanaksız kalır.
+- **Phase 0 — fixture envanteri.** Bağımlılık envanterinin ikizi: varlık başına
+  ortamda hangi tohum kaydın olduğu ve hangisinin olmadığı. Eksik olan case
+  tasarım anında `BLOCKED (fixture)` olur. Kalıcı yeri `.qa/environment.md`
+  (şablon `qa-memory.md`'de). Gerekçe: o koşumdaki BLOCKED'ların neredeyse
+  tamamı ortam değil **veri** eksikliğiydi ve hepsi koşum ortasında keşfedildi.
+- **Phase 0 — "temel build koşulabilir mi" sorusu.** A/B kararı Phase 0'da
+  verilir, çünkü case listesini (her atıflı prob iki kez) ve kararı birden
+  etkiler; uygulanamıyorsa hangi sebeple olduğu yazılır.
+
+### Changed
+
+- **Karar kurallarına atıf boyutu (`release-gate.md`).** Tablo "açık S1/S2"
+  diyordu ama *kimin* olduğunu sormuyordu. Düz uygulandığında, ciddi bir açığı
+  kapatan değişiklik yanından geçtiği ilgisiz bir açık yüzünden bloke oluyor ve
+  bu **ikisini birden** üretimde bırakıyor. Artık karar değişikliğe
+  **atfedilebilen** bulgular üzerinden hesaplanır: A/B ile önceden var olduğu
+  doğrulanan bulgu `NO-GO` üretmez, kararı `GO WITH RISK`'te tutar ve kendi
+  ticket'ı olur. İki istisna onu yeniden değişikliğin hanesine yazar —
+  değişikliğin görevi onu düzeltmekse, ya da değişiklik onu daha erişilebilir /
+  daha ağır hale getiriyorsa. Yalnızca yeni build'de görünen bulgu tam ağırlıkla
+  regresyondur.
+- **Phase 3 — "önceden var" bir ölçümdür, sezgi değil.** Bu etiket artık kararı
+  değiştirdiği için bulgunun kendisiyle aynı kanıt standardına tabi: temel build
+  varsa prob orada da koşulur ve iki çıktı da eklenir; yoksa etiket *muhtemelen
+  önceden var* olarak yazılır.
+- **Non-negotiable #6'ya tasarım bağımsızlığı eklendi.** "Kendi düzeltmeni taze
+  gözle doğrula" yürütmeyi kapsıyordu, tasarımı değil: değişikliği yazan kişi
+  case listesine kendi kör noktalarını da miras bırakır — hiç düşünmediği şey
+  için case tasarlayamaz. Kendi yazdığı yeni kodun case'leri, onu yazan zihinden
+  başka bir şey tarafından tasarlanmalı veya gözden geçirilmeli.
+- **`test-data.md` — "değeri oku, ismi değil".** Sentetik değer kuralının format
+  kontrolünden kaçan hâli: enum/scope/durum kodu gibi tanımı başka yerde olan
+  her şeyin **değeri** tanımdan okunur, koddaki tanımlayıcı adı yeniden
+  yazılmaz. Adı `READ_ONLY` olup değeri `read:only` olan bir üye, tıpkı bir yazım
+  hatası gibi validasyondan döner ve gerçek bug'dan ayırt edilemez. O koşumda
+  iki sahte FAIL'in kaynağı buydu.
+
 ## [1.7.0] — 2026-09-14
 
 Motivasyon: koşum retrospektifi değil — skill'in kendisinin gözden geçirilmesi

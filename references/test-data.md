@@ -51,6 +51,15 @@ format constraints (UUID, e-mail, IBAN/checksum formats, phone, enum, length)
 and satisfy them. Corollary: when a whole group of cases fails with the same
 rejection, suspect your synthetic data before the code.
 
+**Read the value, not the identifier.** For anything whose wire form is defined
+somewhere else — enums, scopes, status codes, feature keys, content types, error
+codes — take the value from the definition (read the file, or resolve it at
+runtime) instead of retyping the name you saw in code. A member named
+`READ_ONLY` whose actual value is `read:only` fails validation exactly like a
+typo, and the rejection is indistinguishable from a real bug. This is the single
+most common source of harness-caused fake FAILs, and it survives the "valid
+format" check above because the shape looks right.
+
 ## Time-sensitive data
 
 Never rely on "now" landing on the right side of a boundary. Create records

@@ -15,6 +15,35 @@ Apply mechanically, then state the rule you applied:
 
 Write it as: `NO-GO — açık 1 adet S1 (kupon iki kez uygulanabiliyor, #3)`.
 
+### Attribution — the change is judged on what it caused
+
+The table above says "open S1/S2" without asking *whose*. Applied literally, a
+change that fixes a serious defect gets blocked by an unrelated defect it merely
+walked past — and blocking it leaves **both** in production. So the verdict is
+computed on the findings **attributable to the change**, and attribution is a
+measurement, not a courtesy (`references/techniques.md` §11 for how to measure
+it; without a baseline, the label is provisional and so is this rule's benefit).
+
+- A finding **verified as pre-existing** — reproduces identically on the
+  pre-change build — does not push the verdict to `NO-GO`. It caps it at
+  `GO WITH RISK`, is reported at its true severity, and leaves the run as its own
+  ticket with an owner. Never silently downgrade it to a footnote because it
+  isn't "yours".
+- **Two exceptions put it back on the change's account:** the change was supposed
+  to fix it (then it's a failed fix, full stop), or the change makes it more
+  reachable, more severe, or newly exploitable (then it's a regression, whatever
+  its age).
+- A finding that appears **only on the new build** is a regression and carries
+  full weight — an open S1 there is `NO-GO` however small the diff.
+- Say the attribution split in the verdict line, because it's the part a reader
+  will otherwise get wrong: `GO WITH RISK — değişikliğe atfedilebilen 0 bulgu;
+  açık 2×S2 önceden var (A/B ile doğrulandı), ayrı ticket`.
+
+The honest framing for the user, when a pre-existing finding is what's holding
+the verdict below `GO`: shipping does not make it worse, and not shipping does
+not make it better — but the two decisions are still theirs, so give them the
+comparison rather than a single word.
+
 **Level caps the verdict.** An L1 (smoke) run cannot produce a `GO` — most of the
 ground was never tested, so the best it can say is `GO WITH RISK` with the
 untested categories listed. `GO` is available at L2, and only an L3 run with the

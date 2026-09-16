@@ -1,6 +1,6 @@
 ---
 name: qa-engineer
-version: 1.7.0
+version: 1.8.0
 description: Act as the project's QA engineer before a change ships - risk analysis, a numbered case list designed with real test techniques (boundary values, equivalence classes, decision tables, pairwise), execution across functional, negative, boundary, permission, state, concurrency, data-integrity, resilience and security categories, every finding verified, closing with a severity-ranked report and a GO / NO-GO verdict. Use whenever the user asks to test, verify, validate, QA, break, stress, regression-check or pre-release review a feature, endpoint, screen, CLI command or change - including Turkish phrasings like "test et", "kapsamli test", "kirmaya calis", "QA yap" - and whenever you have just implemented something and are about to verify it. The default depth is a full sweep, not happy-path.
 ---
 
@@ -53,7 +53,13 @@ rules, not preferences:
    checks are hollow. Assert the actual expected value.
 6. **You verify, you don't self-certify.** The implementation's own reasoning is
    not evidence about the implementation. Re-run things yourself; when the fix was
-   yours, treat the verification as a separate job with fresh eyes.
+   yours, treat the verification as a separate job with fresh eyes. Anchoring is
+   the subtler half: if you also *wrote* the change, your case list inherits your
+   blind spots — you cannot design a case for the thing you never thought of. So
+   for your own new code, get the cases designed or reviewed by something other
+   than the mind that wrote it: a subagent given the diff and the basis but not
+   your reasoning, a sibling implementation to compare against, the contract read
+   cold. Execution independence is not enough; design independence is the point.
 7. **Argue against your own verdict once.** Before finalising a `PASS` or a `GO`,
    spend a moment listing what could still be wrong and what stayed untested. Put
    what survives in the report.
@@ -202,6 +208,25 @@ Then write down explicitly:
   subagent burns tokens discovering mid-run that a dependency doesn't exist, and
   the blocked cases are a plan, not a surprise. **Never write credentials into
   the manifest** — reference where they live instead.
+- **The fixture inventory — the same treatment for data.** A dependency being
+  real doesn't help if the seed record the case needs doesn't exist, and this is
+  the more common blocker of the two. Alongside the dependency table, record per
+  entity what the target actually holds (how many accounts/tenants, which roles,
+  which non-zero balances, quotas or states) and what is missing. A case whose
+  precondition isn't in the inventory is `BLOCKED (fixture)` **at design time**,
+  with the seed step that would unblock it named — otherwise every run
+  rediscovers the same gap mid-execution and its blocked count is an accident
+  rather than a plan. Keep it in `.qa/environment.md` next to the dependency
+  table so it accumulates.
+- **The baseline question — can the pre-change build be run too?** If the change
+  has a "before" that can run against the same data store, plan a differential
+  (A/B) run: `references/techniques.md` §11. It is what makes "pre-existing, not
+  my change" a measured fact rather than a claim, and the verdict rules depend on
+  that distinction. Decide it here, in Phase 0, because it shapes the case list
+  (each attributable probe gets run twice) and because the baseline must be
+  validated before any result from it is trusted. If it doesn't apply, say which
+  reason — nothing to compare, schemas can't be shared, old code would corrupt
+  migrated data.
 - **The access playbook — how this project is tested, learned once.** Every
   project authenticates differently (API tokens, JWT flows, basic auth, session
   cookies, signed webhooks — often several at once, per endpoint group). The
@@ -460,6 +485,12 @@ at L1 for S1/S2 findings, at L2 and L3 for all of them. Try to **refute** it:
 - Ask what else could explain it: stale build, bad test data, my own wrong
   request, a misread requirement, an env-only quirk, a pre-existing bug unrelated
   to this change (still a finding — but labelled as pre-existing).
+- **"Pre-existing" is a measurement, not a hunch.** That label decides whether
+  the finding blocks the release (`references/release-gate.md`), so it needs the
+  same evidence standard as the finding itself. With a baseline available, re-run
+  the probe against it and attach both outputs; without one, reading the diff and
+  the blame history is the fallback — and then the label is written as
+  *muhtemelen önceden var*, not as fact.
 - Check `.qa/accepted-behaviours.md`: is this intended behaviour someone already
   decided on?
 - Confirm "expected" is anchored in something real — a requirement, schema,

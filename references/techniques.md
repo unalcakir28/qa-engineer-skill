@@ -14,6 +14,7 @@ all of them — and note in the report which you used.
 - [8. Cause–effect and data flow](#8-causeeffect-and-data-flow)
 - [9. Exploratory charters](#9-exploratory-charters)
 - [10. Risk-based prioritisation](#10-risk-based-prioritisation)
+- [11. Differential (A/B) execution against the pre-change build](#11-differential-ab-execution-against-the-pre-change-build)
 
 ---
 
@@ -161,3 +162,47 @@ You will not test everything, so choose deliberately. Score each area
 Spend depth on the top of that list, breadth (one case per class) on the rest,
 and say in the report what you deliberately deprioritised. Untested-and-declared
 is a legitimate result; untested-and-implied-tested is not.
+
+## 11. Differential (A/B) execution against the pre-change build
+
+When the change under test can also be built and run in its **pre-change** form,
+run both versions side by side against the *same* data store and the same
+inputs. This converts the hardest question a run has to answer — *did my change
+cause this, or was it always broken?* — from an argument into a measurement.
+
+Setup: the current build on one instance, the baseline (merge base, previous
+tag, or whatever is deployed today) on another, both pointed at one shared
+database or fixture set. Every probe worth attributing is then issued twice.
+
+What it buys, in order of value:
+
+- **Attribution.** A finding that reproduces identically on the baseline is
+  pre-existing *with evidence* instead of assertion — and the verdict rules in
+  `release-gate.md` treat those two cases differently. A finding that appears
+  only on the new build is a regression and outranks everything else.
+- **A regression sweep you didn't have to design.** Byte-comparing the responses
+  of surfaces the change was not supposed to touch (public contract output,
+  reports and exports, error bodies, downstream feeds) is a far stronger claim
+  than "I looked and it seemed the same".
+- **A red-green proof for the change itself.** The baseline *is* the pre-fix
+  code, so the probe that fails there and passes here satisfies non-negotiable
+  #3 without writing a throwaway test first.
+
+**Validate the baseline before trusting a single A/B result.** A baseline that
+silently already contains the change proves the exact opposite of what you will
+conclude from it. Confirm it independently of what you were told — the commit it
+was built from, or a build/process start time that predates the first edit — and
+write that proof into the report. Every "pre-existing" label in it rests on that
+one fact.
+
+Two hygiene rules: both instances must share the data store (otherwise you are
+comparing fixtures, not code), and mutating probes run against throwaway
+fixtures, because a write issued to the baseline lands in the same database the
+new build reads.
+
+It does not always apply — a brand-new feature has nothing to compare against,
+the two versions may not be able to share a schema, and running old code against
+a migrated database can corrupt it. Say which of those ruled it out; don't drop
+it silently. Reach for it whenever the change touches shared behaviour, a
+security boundary, or anything where "pre-existing" and "I broke it" lead to
+different release decisions.

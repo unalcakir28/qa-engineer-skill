@@ -163,6 +163,17 @@ credentials live.
 | e-posta | yok | sandbox | gerçek adrese gönderim yasak |
 | harici RPC servisi | YOK | gerçek | lokalde bu case'ler BLOCKED (ortam) |
 
+## Fixture envanteri
+<!-- Bağımlılığın gerçek olması yetmez: case'in ihtiyaç duyduğu tohum kayıt yoksa
+     case koşulamaz ve bu, ortam eksiğinden daha sık rastlanan engeldir. Varlık
+     başına ne VAR ne YOK yazılır; eksik olan tasarım anında BLOCKED (fixture)
+     olur, koşum ortasında keşfedilmez. -->
+| Varlık | Ortamda var olan | Eksik | Nasıl yaratılır |
+|--------|------------------|-------|-----------------|
+| <hesap / kiracı> | <2 adet; biri boş> | <ikinci rolde üye kullanıcı> | <seed komutu / API çağrısı> |
+| <bakiye / kota> | <yalnızca sıfır bakiye> | <pozitif bakiyeli hesap> | <script> |
+| <durum makinesi kaydı> | <draft, paid> | <expired, refunded> | <nasıl o duruma sürülür> |
+
 ## Bilinen ortam tuzakları
 - <ör. lokalde saat dilimi UTC, staging'de değil>
 ```

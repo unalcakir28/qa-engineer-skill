@@ -427,3 +427,73 @@ sayılmalı. Onaylanırsa MINOR: v1.7.0.
   Phase 0'ın mevcut testleri okuma maddesine. Bu koşuda gerçek bir kör nokta buldu: 35 test
   fabrikayı mock'layıp değişen alanı enjekte ediyordu, dolayısıyla değişikliğin kırdığı hiçbir şey
   görünmeyecekti.
+
+
+---
+
+## 2026-09-16 · L3 · backend API, çok kiracılı yetki sınırı (rapor-only; koşumu yapan = değişikliği yazan)
+
+**Case:** 138 · **Sonuç:** 122 PASS / 3 FAIL / 13 BLOCKED · **Karar:** GO WITH RISK
+(değişikliğe atfedilebilen 0 bulgu; açık 2×S2 önceden var) · **Skill sürümü:** 1.7.0
+
+**Yakalananlar (yapı sayesinde):**
+
+- **Kategori 6 (kombinasyonlar)** karar tablosu olarak kurulunca "yüzey × enjeksiyon
+  noktası × kiracı ilişkisi" matrisi çıktı ve taramayı 2–3 uçtan 14 yüzeye taşıdı.
+  Doğaçlama bir koşu bunların ilk üçünde durur.
+- **Non-negotiable #8 (kiracı izolasyonu bir kategori değil, ayakta duran bir iddia)**
+  iddianın şeklini değiştirdi: "403 mü döndü" yerine "kayıt hangi kiracıya düştü".
+  Bu yeniden çerçeveleme, koşumun en ağır bulgusunu (ödeme, başka kiracının alt
+  kaydına bağlanabiliyor) doğrudan üretti — ve bu arada 403 bekleyen bir iddianın
+  düzeltme geri alınsa bile geçmeye devam edeceğini de gösterdi.
+- **Kategori 4 + tutarlılık oracle'ı** kardeş uçların aynı sınır değerinde farklı
+  davrandığını yakaladı (biri 400, diğeri 500). Keşifle bulunmaz.
+- **Basis'i tersten okuma** kuralı, silinmiş bir alanın hiçbir case tarafından
+  kapsanmadığını gösterdi; açık koşum içinde kapatıldı.
+
+**Maliyet/gürültü:**
+
+- Bir yürütücü ajan, gerçek bir dış sağlayıcı çağrısı yapmaktan çekinip case'i
+  NOT RUN bıraktı; sağlayıcı aslında erişilebilir ve güvenliydi, case iki çağrıda
+  tamamlandı. Ortam manifesti bağımlılığın *var olup olmadığını* yazıyor,
+  *çağrılmasının güvenli olup olmadığını* yazmıyor.
+- İki sahte FAIL, ikisi de aynı sebepten: enum'ın tanımlayıcı adı wire değeri
+  sanılarak kullanıldı. Mevcut "sentetik değer geçerli olmalı" kuralı format
+  kontrolünden bahsediyor; bu hata format kontrolünü geçiyor çünkü şekil doğru.
+- 138 case'in 13'ü BLOCKED ve neredeyse tamamı **veri** eksikliği. Ortam envanteri
+  bağımlılıkları kapsıyor, fixture'ları kapsamıyordu; hepsi koşum ortasında
+  keşfedildi.
+
+**Doğaçlananlar (kural olmalı):**
+
+- **A/B diferansiyel koşum.** Değişiklik öncesi build'i aynı veri deposuna karşı
+  yan yana ayağa kaldırmak ve her bulguyu iki tarafta da koşmak. Koşumun tek en
+  değerli hamlesiydi: "sekiz bulgunun sekizi de önceden var" cümlesi iddia değil
+  ölçüm oldu, dokunulmaması gereken yüzeyler bayt bayt karşılaştırılabildi ve
+  düzeltmenin kırmızı-yeşili ayrı bir test yazmadan çıktı.
+- **Temelin geçerliliğini önce kanıtlama.** Eski sürecin başlangıç zamanının ilk
+  edit'ten önce olduğu gösterilmeden hiçbir A/B sonucuna güvenilmedi. Bu adım
+  olmadan teknik kendi sonucunun tersini kanıtlayabilir.
+
+**Zorlanan non-negotiable:**
+
+- **#6 (kendini sertifikalandırma yasağı)**, kuralın adını koymadığı bir yerden
+  zorlandı: değişikliği yazan kişi case listesini de tasarladı. Kural yürütme
+  bağımsızlığını istiyor, tasarım bağımsızlığını istemiyor. Kendi yazdığı yeni
+  kodun sınır değer tutarsızlığını, listeyi tasarlayan değil, aynı uçları kardeş
+  bir uçla karşılaştıran bağımsız bir ajan buldu.
+- **Karar kuralı gerçeklikle çarpıştı:** "kritik akışta açık S2 → NO-GO", önceden
+  var olan bir S2 yüzünden, kanıtlanmış bir S1'i kapatan düzeltmeyi bloke
+  ediyordu. Kural kimin bulgusu olduğunu sormuyor.
+
+**Öneriler:**
+
+- P1 — diferansiyel (A/B) yürütme tekniği + temel geçerlilik kanıtı → UYGULANDI (v1.8.0)
+- P1 — karar kurallarına atıf boyutu → UYGULANDI (v1.8.0)
+- P2 — Phase 0 fixture envanteri → UYGULANDI (v1.8.0)
+- P2 — non-negotiable #6'ya tasarım bağımsızlığı → UYGULANDI (v1.8.0)
+- P3 — sentetik değer kuralına "değeri oku, ismi değil" → UYGULANDI (v1.8.0)
+- **P3 — AÇIK:** ortam manifestinin bağımlılık tablosuna "çağrılması güvenli mi"
+  sütunu. Şu an yalnızca *gerçek / mock / yok* yazıyor; yürütücü ajan bir dış
+  çağrının geri döndürülemez maliyeti olup olmadığını bilmediği için temkinli
+  davranıp case'i koşmuyor. Sonraki koşumda tekrarlarsa P2'ye yükselir.
