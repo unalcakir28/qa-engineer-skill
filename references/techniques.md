@@ -187,6 +187,13 @@ What it buys, in order of value:
 - **A red-green proof for the change itself.** The baseline *is* the pre-fix
   code, so the probe that fails there and passes here satisfies non-negotiable
   #3 without writing a throwaway test first.
+- **Proof that the harness can see the defect at all.** This is the half that
+  matters most for a concurrency, locking or isolation claim (non-negotiable #9):
+  a green concurrent run against the new build means nothing until the *same*
+  harness, unchanged, has been shown to go red against the baseline. Until then
+  "no overshoot" and "my parallelism never actually collided" produce identical
+  output. Run the baseline first, and treat its red as the licence to believe the
+  green.
 
 **Validate the baseline before trusting a single A/B result.** A baseline that
 silently already contains the change proves the exact opposite of what you will

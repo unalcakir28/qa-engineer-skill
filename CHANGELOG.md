@@ -3,6 +3,42 @@
 Semver. Her onaylı değişiklik buraya, hangi koşumun retrospektifinden geldiğiyle
 birlikte yazılır. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.9.0] — 2026-09-22
+
+Motivasyon: 2026-09-22 L3 koşumunun retrospektifi (backend servis katmanı,
+eşzamanlılık/kilit düzeltmesi; projenin mevcut mock'lu süiti tamamen yeşilken
+değişikliğin ana iddiası hakkında sıfır bilgi taşıyordu).
+
+### Added
+
+- **Non-negotiable #9 — test, iddianın yaşadığı seviyede koşmalı.** Bir
+  değişiklik eşzamanlılık, kilitleme, izolasyon, transaction, atomiklik veya
+  sıralama hakkında bir iddiada bulunuyorsa, mevcut test süiti ne kadar yeşil
+  olursa olsun o iddianın kapsamı değildir: test double'ları kilit tutmaz,
+  izolasyon seviyesi uygulamaz, commit sırası üretmez. Böyle bir değişiklik en az
+  bir case'i gerçek bağımlılığa karşı (gerçek veritabanı, gerçek broker, gerçek
+  paralel süreçler) koşmalı; koşulamıyorsa rapor iddianın test edilmediğini
+  bu kelimelerle yazar.
+- **Phase 3 — zamanlama bulgusu, zararsız sıralamalar ayıklanmadan bir sayı
+  değildir.** Paralel bir koşumda her tur "kötü" değildir; koşulun zaten
+  herkesten sonra devreye girdiği turlar beklenen davranıştır. Bir turun bulguya
+  sayılması için, bir aktörün yeni durumu gerçekten gördüğünün gösterilmesi
+  gerekir. Bir bulgu ilk ölçümde 25'te 13 çıkmıştı; ayıklama sonrası gerçek rakam
+  30'da 3 oldu — aynı hata, onda bir iddia.
+
+### Changed
+
+- **Non-negotiable #3 (kırmızı-yeşil) eşzamanlılık için genişletildi.** Yalnızca
+  eşzamanlılık, zamanlama veya yük altında ortaya çıkan bir hatada yeşil sonuç,
+  aynı harness'ın düzeltilmemiş kodda kırmızı verdiği gösterilene kadar bilgi
+  taşımaz — aksi halde yeşil ile "senaryo hiç gerçekleşmedi" ayırt edilemez.
+- **`references/techniques.md` §11 (A/B diferansiyel)**, tekniğin ikinci
+  işlevini açık yazıyor: atıf kadar **harness geçerliliği**. Eşzamanlılık
+  iddialarında temel build'in kırmızısı, yeni build'in yeşiline inanmanın
+  lisansıdır.
+- **Katalog satırı 9 (eşzamanlılık & idempotency)** artık en az bir case'in
+  gerçek bağımlılığa karşı koşulmasını istiyor ve #9'a atıf veriyor.
+
 ## [1.8.0] — 2026-09-16
 
 Motivasyon: 2026-09-16 L3 koşumunun retrospektifi (backend API, güvenlik sınırı

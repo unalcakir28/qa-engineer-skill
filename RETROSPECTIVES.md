@@ -497,3 +497,70 @@ sayılmalı. Onaylanırsa MINOR: v1.7.0.
   sütunu. Şu an yalnızca *gerçek / mock / yok* yazıyor; yürütücü ajan bir dış
   çağrının geri döndürülemez maliyeti olup olmadığını bilmediği için temkinli
   davranıp case'i koşmuyor. Sonraki koşumda tekrarlarsa P2'ye yükselir.
+
+---
+
+## 2026-09-22 · L3 · backend API / servis katmanı (eşzamanlılık + kilit/izolasyon düzeltmesi; rapor-only, sonra 3 düzeltme)
+
+**Case:** 41 · **Sonuç:** 33 PASS / 2 FAIL / 6 BLOCKED · **Karar:** GO
+(değişikliğe atfedilebilen 0 bulgu; 2 bulgu ölçümle önceden var) ·
+**Skill sürümü:** 1.8.0
+
+**Yakalananlar (yapı sayesinde):**
+
+- **A/B diferansiyel koşum (§11), bu kez atıf için değil geçerlilik için.**
+  Değişiklik öncesi build aynı veri deposuna karşı koşulunca tek bir satırda hem
+  hatanın gerçekliği hem de harness'ın onu görebildiği kanıtlandı: eski kod
+  cap'in dört katını hiç ret vermeden dağıttı, yeni kod tam cap'te durdu. Bu
+  ölçüm olmadan yeni build'in yeşili ile "paralellik hiç çakışmadı" ayırt
+  edilemezdi.
+- **Kategori 9'u gerçek bağımlılığa karşı koşma zorunluluğu.** Projenin mevcut
+  süiti tamamen yeşildi ve değişikliğin ana iddiası hakkında sıfır bilgi
+  taşıyordu — mock'lu bir Prisma kilit de görmez, izolasyon seviyesi de. Koşumun
+  bütün gerçek bulguları, elde kurulan gerçek-servis/gerçek-veritabanı
+  harness'ından çıktı.
+- **Bulguyu koşuma ait olup olmadığına göre ayırma** iki hassasiyet bulgusunun da
+  önceden var olduğunu gösterdi; biri (cap'e bağlı olan yarısı) yine de bu
+  değişikliğin hesabına yazıldı çünkü düzeltmenin kırptığı rakam tam o yoldan
+  geçiyordu. İkisini tek bulgu olarak raporlamak, kapsam dışı olan yarısını da
+  düzeltme baskısına sokardı.
+- **Kendi verdiği karara bir kez karşı çıkma (#7)**, bağımsız bir tasarım
+  ajanının doğrulanmamış bir hipotezini (iade yolu sayaçları eksiye düşürebilir)
+  rapora girmeden ölçmeye zorladı; ölçüm hipotezi çürüttü ve bulgu düştü.
+
+**Maliyet/gürültü:**
+
+- **Bir zamanlama bulgusu ilk ölçümde on kat abartıldı.** 25 turun 13'ü "kötü"
+  sayılmıştı; turların çoğunda ise koşul zaten herkes bittikten sonra devreye
+  girmişti, yani beklenen davranıştı. Zararsız sıralamalar ayıklanınca gerçek
+  rakam 30'da 3 oldu. Rapora girseydi düzeltme önceliği yanlış hesaplanırdı.
+- Rapor ve süit dosyası, worktree yerine ana çalışma kopyasına yazıldı; bir
+  `Edit` "dosya yok" deyince fark edildi. Mutlak yolu bir kez doğrulamak bunu
+  baştan keserdi.
+
+**Doğaçlananlar (kural olmalı):**
+
+- **İddianın yaşadığı seviyede test etme.** Eşzamanlılık/kilit/izolasyon/atomiklik
+  iddiası, ne kadar yeşil olursa olsun mock'lu bir süitle kapsanmış sayılmaz;
+  en az bir case gerçek bağımlılığa karşı koşulmalı, yoksa rapor bunu o kelimelerle
+  yazmalı.
+- **Eşzamanlılıkta kırmızı-yeşil bir formalite değil.** Yeşil sonuç, aynı
+  harness'ın düzeltilmemiş kodda kırmızı verdiği gösterilene kadar bilgi
+  taşımıyor.
+
+**Zorlanan non-negotiable:**
+
+- **#3 (kırmızı-yeşil)** eşzamanlılık bağlamında yetersiz kaldı: kural "test
+  düzeltme öncesi düşmeli" diyor, ama eşzamanlı bir senaryonun hiç
+  gerçekleşmemesi de aynı çıktıyı verir. Kuralın bu vakayı ayrıca adlandırması
+  gerekti.
+
+**Öneriler:**
+
+- P1 — eşzamanlılıkta kırmızı-yeşilin zorunluluğu (#3 genişletmesi) → UYGULANDI (v1.9.0)
+- P1 — yeni non-negotiable #9: testin iddianın seviyesinde koşması → UYGULANDI (v1.9.0)
+- P2 — zamanlama bulgusunda zararsız sıralamaların sayıdan önce ayıklanması
+  (Phase 3) → UYGULANDI (v1.9.0)
+- **P3 — AÇIK (devir):** ortam manifestinin bağımlılık tablosuna "çağrılması
+  güvenli mi" sütunu (2026-09-16 koşumundan). Bu koşumda tekrarlamadı — dış
+  sağlayıcı çağrısı gerektiren case yoktu — o yüzden P3 olarak açık kalıyor.

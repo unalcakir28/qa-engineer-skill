@@ -1,6 +1,6 @@
 ---
 name: qa-engineer
-version: 1.8.0
+version: 1.9.0
 description: Act as the project's QA engineer before a change ships - risk analysis, a numbered case list designed with real test techniques (boundary values, equivalence classes, decision tables, pairwise), execution across functional, negative, boundary, permission, state, concurrency, data-integrity, resilience and security categories, every finding verified, closing with a severity-ranked report and a GO / NO-GO verdict. Use whenever the user asks to test, verify, validate, QA, break, stress, regression-check or pre-release review a feature, endpoint, screen, CLI command or change - including Turkish phrasings like "test et", "kapsamli test", "kirmaya calis", "QA yap" - and whenever you have just implemented something and are about to verify it. The default depth is a full sweep, not happy-path.
 ---
 
@@ -44,7 +44,13 @@ rules, not preferences:
    a finding — don't neutralise it.
 3. **Red-green or it doesn't count.** A regression test for a bug must fail on the
    pre-fix code and pass after. A brand-new test that passes on the first run
-   proves nothing; treat it as suspect and say so.
+   proves nothing; treat it as suspect and say so. For a defect that only appears
+   under concurrency, timing or load, red-green is not optional and not a
+   formality: a green result carries information **only** once the same harness
+   has been shown to go red against the unfixed code. Otherwise green is
+   indistinguishable from "the scenario never actually occurred" — the parallel
+   requests serialised, the queue drained one at a time, the second writer arrived
+   after the first committed.
 4. **Test the intent, not the current behaviour.** Never write an assertion by
    reading what the code outputs and freezing it — that certifies the bug. Anchor
    the expectation in a requirement, schema, doc or a named oracle heuristic
@@ -66,6 +72,17 @@ rules, not preferences:
 8. **Tenant isolation is a standing assertion, not a category.** In a multi-tenant
    system, every case that reads or writes data also checks it stayed inside its
    tenant. A leak is a security incident, not a bug.
+9. **The test has to run at the level the claim lives at.** When a change asserts
+   something about concurrency, locking, isolation, transactions, atomicity or
+   ordering, the existing test suite is not coverage of that claim however green
+   it is — a suite built on doubles exercises the code's shape, not the runtime
+   guarantee, and a lock, a transaction boundary or an isolation level simply does
+   not exist inside a double. Such a change needs at least one case executed
+   against the real dependency (a real database, a real broker, real parallel
+   processes), or the claim is untested and the report says so in those words.
+   The same rule reads in reverse and is the cheaper half: a fully green suite is
+   not evidence that the defect is fixed, so never let it stand in for the
+   measurement.
 
 ---
 
@@ -341,7 +358,7 @@ are listed in the report as "seviye gereği atlandı", not silently dropped.
 | 6 | **Combinations** | Decision table for multi-condition rules, then pairwise across factors (role × state × method × locale) instead of the impossible full cross-product | always |
 | 7 | **Permissions / tenancy** | Every role × every action, anonymous, expired/tampered token or API key, revoked key, missing scope, IDOR (user A fetches B's id), other tenant's data in lists/search/export/counts, privilege escalation, per-key rate limit and quota, key leaked into logs or error bodies | always (if auth exists) |
 | 8 | **State & sequence** | Every legal transition, and every *illegal* one: cancel a cancelled order, pay twice, approve then edit, act on an expired record, use a one-time token twice, A→B→A, back button then resubmit | always (if state exists) |
-| 9 | **Concurrency & idempotency** | Double submit, two tabs, retry after timeout, two writers on one row, 20 parallel requests against one stock/balance/counter, duplicate webhook, overlapping scheduled job | always |
+| 9 | **Concurrency & idempotency** | Double submit, two tabs, retry after timeout, two writers on one row, 20 parallel requests against one stock/balance/counter, duplicate webhook, overlapping scheduled job. **Run at least one of these against the real dependency** — a suite of doubles cannot observe a lock, an isolation level or a commit order (non-negotiable #9) | always |
 | 10 | **Data integrity** | After each mutation read the source of truth (the DB row, not the response echo): no orphans, totals reconcile, soft-deletes invisible everywhere, timestamps/audit set, full rollback on partial failure, side effects exactly once | always |
 | 11 | **Edge data** | Turkish characters (`İ ı Ş ş Ğ ğ Ç ç Ö ö Ü ü` and the `i/İ` uppercase trap), emoji, RTL, 10 000-char strings, `0`, `-1`, `0.001`, int/float limits, money rounding, leap day, DST, timezone-crossing dates, `null` vs missing vs `""`. Corpus: `references/edge-data.md` | always |
 | 12 | **Error handling & resilience** | Dependency down / slow / 500 / garbage, timeout, constraint violation, killed mid-transaction: sane user-facing message, consistent state, logged with context, no stack trace or secret leaked | always |
@@ -496,6 +513,18 @@ at L1 for S1/S2 findings, at L2 and L3 for all of them. Try to **refute** it:
 - Confirm "expected" is anchored in something real — a requirement, schema,
   constraint, doc or convention. If nothing anchors it, it's an **open question**,
   not a bug.
+- **A timing finding needs its benign orderings filtered out before it is a
+  number.** A run that interleaves events will also produce interleavings where
+  the outcome is simply correct — the state changed after the work finished, the
+  second actor arrived once the first had committed, the setting was applied after
+  everything it governs had already run. Counting those in makes the defect look
+  several times larger than it is and the whole finding collapses the moment
+  someone checks. So define, in the harness, what makes a round *genuinely* wrong
+  (some actor demonstrably observed the new state and the invariant still broke),
+  classify each round against it, and report the classified count with the benign
+  ones shown separately. One such finding first measured 13 bad rounds out of 25;
+  once the rounds where the change had simply arrived last were separated out, the
+  real number was 3 out of 30 — same defect, one tenth the claim.
 - Reduce to the minimal reproduction and capture the exact evidence.
 
 Anything that survives becomes a finding with `verified: yes`. Anything that
