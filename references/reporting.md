@@ -19,109 +19,109 @@ notices is worse than an error page.
 Use this structure. Keep it scannable — the worst finding goes at the top.
 
 ```markdown
-# Test Raporu — <feature> — <date>
+# Test Report — <feature> — <date>
 
-## KARAR: <GO | GO WITH RISK | NO-GO>
-> Gerekçe: <the rule that produced it, e.g. "açık 1 adet S1 (#3)">
+## VERDICT: <GO | GO WITH RISK | NO-GO>
+> Rationale: <the rule that produced it, e.g. "1 open S1 (#3)">
 > <If NO-GO: what must be fixed before this can ship.>
 
-## Özet
-- Seviye: <L1 smoke | L2 standart | L3 sürüm kapısı | odaklı> — <kullanıcı seçti / varsayılan>
-- Kapsam: <branch/commit, environment, tier planı (A: … / B: … / C: … / D: …)>
-- Sonuç: <N> senaryo koşuldu — <N> PASS / <N> FAIL / <N> BLOCKED / <N> NOT RUN
-- Bulgular: <N>×S1, <N>×S2, <N>×S3, <N>×S4, <N> risk, <N> açık soru
-- En kritik bulgu: <one sentence>
+## Summary
+- Level: <L1 smoke | L2 standard | L3 release gate | focused> — <user-selected / default>
+- Scope: <branch/commit, environment, tier plan (A: … / B: … / C: … / D: …)>
+- Result: <N> scenarios run — <N> PASS / <N> FAIL / <N> BLOCKED / <N> NOT RUN
+- Findings: <N>×S1, <N>×S2, <N>×S3, <N>×S4, <N> risk, <N> open question(s)
+- Most critical finding: <one sentence>
 
-## Bulgular (severity sırasına göre)
+## Findings (by severity)
 
 ### [S1] <short title>  ·  `KPN-021`
-- **Nerede:** <endpoint / screen / file:line>
-- **Tekrar üretme:**
+- **Where:** <endpoint / screen / file:line>
+- **Reproduction:**
   1. <exact step, with the exact request/input>
   2. ...
-- **Beklenen:** <...> — *dayanak:* <requirement / schema / constraint / doc>
-- **Gerçekleşen:** <...>
-- **Kanıt:** <real response body / log line / DB row / screenshot path>
-- **Doğrulama:** temiz state'te <N> kez tekrar üretildi; elenen alternatif
-  açıklamalar: <stale build / hatalı test verisi / yanlış istek / kasıtlı davranış>
-- **Muhtemel sebep:** <file:line + one-line diagnosis, if known>
-- **Etki:** <who is affected and how badly>
-- **Yeni mi:** <bu değişiklikle geldi | önceden de vardı>
+- **Expected:** <...> — *basis:* <requirement / schema / constraint / doc>
+- **Actual:** <...>
+- **Evidence:** <real response body / log line / DB row / screenshot path>
+- **Verification:** reproduced <N> times from a clean state; alternative
+  explanations ruled out: <stale build / bad test data / malformed request / intended behaviour>
+- **Likely cause:** <file:line + one-line diagnosis, if known>
+- **Impact:** <who is affected and how badly>
+- **New:** <introduced by this change | pre-existing>
 
 ### [S2] ...
 
-## Riskler ve gözlemler
+## Risks and observations
 - <not reproduced, but worth attention — with reasoning>
 
-## Açık sorular
+## Open questions
 - <ambiguous requirement — needs a product decision>
 
-## Kapsam özeti (kategori bazında)
+## Coverage summary (by category)
 
-Kataloğun her satırı burada görünmeli; sıfır olan satırın gerekçesi yazılmalı.
+Every row of the catalogue must appear here; a zero row needs its reason stated.
 
-| # | Kategori | Senaryo | PASS | FAIL | NOT RUN | Not / gerekçe |
+| # | Category | Scenario | PASS | FAIL | NOT RUN | Note / rationale |
 |---|----------|---------|------|------|---------|----------------|
 | 1 | Happy path | 5 | 5 | 0 | 0 | |
-| 2 | Fonksiyonel mekanik | 8 | 7 | 1 | 0 | |
-| 3 | Negatif / validasyon | 11 | 9 | 2 | 0 | |
-| 4 | Sınır değer | 9 | 8 | 1 | 0 | |
-| 5 | Denklik sınıfı | ... | | | | |
-| 6 | Kombinasyon (karar tablosu / pairwise) | ... | | | | |
-| 7 | Yetki / kiracılık | ... | | | | |
-| 8 | Durum & sıra | ... | | | | |
-| 9 | Eşzamanlılık & idempotency | ... | | | | |
-| 10 | Veri bütünlüğü | ... | | | | |
-| 11 | Kenar veri | ... | | | | |
-| 12 | Hata yönetimi & dayanıklılık | ... | | | | |
-| 13 | Güvenlik | ... | | | | |
-| 14 | Regresyon & entegrasyon | ... | | | | |
-| 15 | Keşifsel / hata tahmini | ... | | | | |
-| 16 | Performans | 0 | | | | tek kayıtlı dev DB — anlamlı ölçüm yok |
-| 17 | Uyumluluk / responsive / a11y | ... | | | | |
-| 18 | Yerelleştirme & formatlar | ... | | | | |
+| 2 | Functional mechanics | 8 | 7 | 1 | 0 | |
+| 3 | Negative / validation | 11 | 9 | 2 | 0 | |
+| 4 | Boundary value | 9 | 8 | 1 | 0 | |
+| 5 | Equivalence class | ... | | | | |
+| 6 | Combination (decision table / pairwise) | ... | | | | |
+| 7 | Permission / tenancy | ... | | | | |
+| 8 | State & sequence | ... | | | | |
+| 9 | Concurrency & idempotency | ... | | | | |
+| 10 | Data integrity | ... | | | | |
+| 11 | Edge data | ... | | | | |
+| 12 | Error handling & resilience | ... | | | | |
+| 13 | Security | ... | | | | |
+| 14 | Regression & integration | ... | | | | |
+| 15 | Exploratory / bug hunting | ... | | | | |
+| 16 | Performance | 0 | | | | dev DB has a single record — no meaningful measurement |
+| 17 | Compatibility / responsive / a11y | ... | | | | |
+| 18 | Localisation & formats | ... | | | | |
 | 19 | Config / migration / deploy | ... | | | | |
-| 20 | Gözlemlenebilirlik | ... | | | | |
+| 20 | Observability | ... | | | | |
 
-## Case listesi
+## Case list
 
-Tam liste dosyada: `.qa/suites/<feature>.md` (veya `test-cases-...md`).
-Raporda ya dosyaya link ver ya da tabloyu buraya kopyala.
+Full list in the file: `.qa/suites/<feature>.md` (or `test-cases-...md`).
+In the report, either link to the file or copy the table here.
 
-| ID | Tier | Kategori | Senaryo | Beklenen | Gerçekleşen | Durum |
+| ID | Tier | Category | Scenario | Expected | Actual | Status |
 |----|------|----------|---------|----------|-------------|-------|
 | KPN-001 | A | Happy | ... | ... | ... | PASS |
-| KPN-014 | A | Sınır | ... | ... | ... | FAIL (S2) |
-| KPN-041 | C | Kritik akış smoke | ... | ... | ... | PASS |
+| KPN-014 | A | Boundary | ... | ... | ... | FAIL (S2) |
+| KPN-041 | C | Critical flow smoke | ... | ... | ... | PASS |
 
-## Kapsam dışı bırakılanlar
-- <seviye gereği atlanan kategoriler — hangileri, neden>
-- <bilinçli deprioritize edilenler — dürüst ol>
+## Excluded from scope
+- <categories skipped due to level — which ones, why>
+- <deliberately deprioritised — be honest>
 
-## Eklenen otomatik testler
+## Automated tests added
 - `path/to/test_file.py::test_name` — <what it guards> (was failing before fix X)
 
-## Prod öncesi kontrol listesi
-| Alan | Durum | Not |
+## Pre-production checklist
+| Area | Status | Note |
 |------|-------|-----|
-| Migration & veri (geri alınabilir mi, index'ler) | OK / RISK / N/A | |
-| Geriye uyumluluk (eski istemciler, kuyruk mesajları) | | |
-| Config & feature flag (kapalı yol dahil) | | |
-| Güvenlik & gizlilik (yetki, log'da sır/PII, rate limit) | | |
-| İşletilebilirlik (log, metrik, geri dönüş planı) | | |
-| Temizlik (test verisi, CI'a eklenen testler) | | |
+| Migration & data (reversible? indexes?) | OK / RISK / N/A | |
+| Backward compatibility (old clients, queue messages) | | |
+| Config & feature flag (including the off path) | | |
+| Security & privacy (auth, secrets/PII in logs, rate limit) | | |
+| Operability (logging, metrics, rollback plan) | | |
+| Housekeeping (test data, tests added to CI) | | |
 
-## Bir insanın hâlâ kontrol etmesi gerekenler
-- <real payment / e-mail deliverability / görsel-UX / gerçek yük / erişemediğim hesap>
+## What a human still needs to check
+- <real payment / e-mail deliverability / visual UX / real load / an account I can't reach>
 
-## Önerilen düzeltme sırası
-1. [S1] <bulgu> — <tek satır çözüm fikri>
+## Suggested fix order
+1. [S1] <finding> — <one-line fix idea>
 2. [S2] ...
 
-> Rapor-only modda rapor burada biter: "Bu düzeltmeleri yapmamı ister misin?"
+> In report-only mode the report ends here: "Would you like me to make these fixes?"
 
-## Yapılan düzeltmeler *(yalnızca düzeltme istendiyse)*
-| # | Bulgu | Düzeltme | Dosya | Doğrulama |
+## Fixes made *(only if a fix was requested)*
+| # | Finding | Fix | File | Verification |
 |---|-------|----------|-------|-----------|
 ```
 
@@ -142,7 +142,7 @@ A finding is only useful if someone else can act on it. Before writing one down:
   one root cause into eight items (group them and name the root cause once).
 - **Expected clearly justified:** cite the requirement, doc, schema constraint
   or convention that makes the actual behaviour wrong. If nothing justifies it,
-  it belongs in Açık sorular, not Bulgular.
+  it belongs in Open questions, not Findings.
 - **No blame, no drama:** describe behaviour, not the developer.
 
 ## Honesty rules

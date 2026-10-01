@@ -5,7 +5,7 @@ every phase and every evidence rule in `SKILL.md` still applies.
 
 ## PR mode
 
-The user points at a pull request ("bu PR'ı test et").
+The user points at a pull request (e.g. "test this PR").
 
 - Tier A is the PR's diff; run the normal phases at the chosen level.
 - In addition to the standard report, produce a condensed PR-comment version:
@@ -23,7 +23,7 @@ The skill is wired to a scheduler (cron, CI) and nobody is there to answer.
   changed since the last logged run.
 - Write the report and update the QA memory as usual; lead with any S1/S2 so it
   is the first thing a human sees.
-- Leave retrospective proposals as `ÖNERİ — onay bekliyor`.
+- Leave retrospective proposals as `PROPOSAL — awaiting approval`.
 - Never fix code, never prune data, never post anywhere external while unattended.
 
 ## Parallelising a large list

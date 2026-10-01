@@ -1,278 +1,298 @@
 # qa-engineer — Changelog
 
-Semver. Her onaylı değişiklik buraya, hangi koşumun retrospektifinden geldiğiyle
-birlikte yazılır. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+Semver. Every approved change is recorded here, along with which run's
+retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [1.9.0] — 2026-09-22
 
-Motivasyon: 2026-09-22 L3 koşumunun retrospektifi (backend servis katmanı,
-eşzamanlılık/kilit düzeltmesi; projenin mevcut mock'lu süiti tamamen yeşilken
-değişikliğin ana iddiası hakkında sıfır bilgi taşıyordu).
+Motivation: retrospective of the 2026-09-22 L3 run (backend service layer,
+a concurrency/locking fix; the project's existing mock-based suite was fully
+green while carrying zero information about the change's actual claim).
 
 ### Added
 
-- **Non-negotiable #9 — test, iddianın yaşadığı seviyede koşmalı.** Bir
-  değişiklik eşzamanlılık, kilitleme, izolasyon, transaction, atomiklik veya
-  sıralama hakkında bir iddiada bulunuyorsa, mevcut test süiti ne kadar yeşil
-  olursa olsun o iddianın kapsamı değildir: test double'ları kilit tutmaz,
-  izolasyon seviyesi uygulamaz, commit sırası üretmez. Böyle bir değişiklik en az
-  bir case'i gerçek bağımlılığa karşı (gerçek veritabanı, gerçek broker, gerçek
-  paralel süreçler) koşmalı; koşulamıyorsa rapor iddianın test edilmediğini
-  bu kelimelerle yazar.
-- **Phase 3 — zamanlama bulgusu, zararsız sıralamalar ayıklanmadan bir sayı
-  değildir.** Paralel bir koşumda her tur "kötü" değildir; koşulun zaten
-  herkesten sonra devreye girdiği turlar beklenen davranıştır. Bir turun bulguya
-  sayılması için, bir aktörün yeni durumu gerçekten gördüğünün gösterilmesi
-  gerekir. Bir bulgu ilk ölçümde 25'te 13 çıkmıştı; ayıklama sonrası gerçek rakam
-  30'da 3 oldu — aynı hata, onda bir iddia.
+- **Non-negotiable #9 — a test must run at the level its claim lives at.** If a
+  change makes a claim about concurrency, locking, isolation, transactions or
+  ordering, the existing test suite is not coverage of that claim however green
+  it is: test doubles don't hold locks, don't enforce an isolation level, don't
+  produce a commit order. Such a change must run at least one case against the
+  real dependency (a real database, a real broker, real parallel processes); if
+  it can't, the report states in those words that the claim is untested.
+- **Phase 3 — a timing finding is not a number until benign orderings are
+  filtered out.** Not every round of a parallel run is "bad"; a round where the
+  condition simply arrived after everything else is expected behaviour. For a
+  round to count as a finding, it must be shown that some actor genuinely
+  observed the new state. One finding first measured 13 out of 25; after
+  filtering, the real number was 3 out of 30 — same defect, one tenth the claim.
 
 ### Changed
 
-- **Non-negotiable #3 (kırmızı-yeşil) eşzamanlılık için genişletildi.** Yalnızca
-  eşzamanlılık, zamanlama veya yük altında ortaya çıkan bir hatada yeşil sonuç,
-  aynı harness'ın düzeltilmemiş kodda kırmızı verdiği gösterilene kadar bilgi
-  taşımaz — aksi halde yeşil ile "senaryo hiç gerçekleşmedi" ayırt edilemez.
-- **`references/techniques.md` §11 (A/B diferansiyel)**, tekniğin ikinci
-  işlevini açık yazıyor: atıf kadar **harness geçerliliği**. Eşzamanlılık
-  iddialarında temel build'in kırmızısı, yeni build'in yeşiline inanmanın
-  lisansıdır.
-- **Katalog satırı 9 (eşzamanlılık & idempotency)** artık en az bir case'in
-  gerçek bağımlılığa karşı koşulmasını istiyor ve #9'a atıf veriyor.
+- **Non-negotiable #3 (red-green) extended for concurrency.** For a defect that
+  only appears under concurrency, timing or load, a green result carries no
+  information until the same harness has been shown to go red against the
+  unfixed code — otherwise green is indistinguishable from "the scenario never
+  actually occurred".
+- **`references/techniques.md` §11 (A/B differential)** now spells out the
+  technique's second function explicitly: **harness validity**, as much as
+  attribution. For concurrency claims, the baseline build going red is the
+  license to trust the new build going green.
+- **Catalogue row 9 (concurrency & idempotency)** now requires at least one case
+  to run against the real dependency, and references #9.
 
 ## [1.8.0] — 2026-09-16
 
-Motivasyon: 2026-09-16 L3 koşumunun retrospektifi (backend API, güvenlik sınırı
-düzeltmesi, koşumu yapan kişi aynı zamanda değişikliği yazan kişiydi).
+Motivation: retrospective of the 2026-09-16 L3 run (backend API, a security
+boundary fix; the person running it was also the person who wrote the change).
 
 ### Added
 
-- **`references/techniques.md` §11 — diferansiyel (A/B) yürütme.** Değişiklik
-  öncesi build, mevcut build'in yanında **aynı** veri deposuna karşı ayağa
-  kaldırılır ve atıf gerektiren her prob iki kez koşulur. "Bu bulguyu ben mi
-  yarattım" sorusu tartışma olmaktan çıkıp ölçüme dönüşür; dokunulmaması gereken
-  yüzeylerin bayt bayt karşılaştırması tasarlanmamış bir regresyon taraması
-  verir; temel build zaten düzeltme öncesi kod olduğu için kırmızı-yeşil kanıtı
-  bedava gelir. Temelin geçerliliğini (hangi commit'ten / hangi zamandan) ilk
-  sonuçtan **önce** kanıtlama zorunluluğu kuralın parçası — aksi halde tüm
-  "önceden var" etiketleri dayanaksız kalır.
-- **Phase 0 — fixture envanteri.** Bağımlılık envanterinin ikizi: varlık başına
-  ortamda hangi tohum kaydın olduğu ve hangisinin olmadığı. Eksik olan case
-  tasarım anında `BLOCKED (fixture)` olur. Kalıcı yeri `.qa/environment.md`
-  (şablon `qa-memory.md`'de). Gerekçe: o koşumdaki BLOCKED'ların neredeyse
-  tamamı ortam değil **veri** eksikliğiydi ve hepsi koşum ortasında keşfedildi.
-- **Phase 0 — "temel build koşulabilir mi" sorusu.** A/B kararı Phase 0'da
-  verilir, çünkü case listesini (her atıflı prob iki kez) ve kararı birden
-  etkiler; uygulanamıyorsa hangi sebeple olduğu yazılır.
+- **`references/techniques.md` §11 — differential (A/B) execution.** The
+  pre-change build is stood up alongside the current build against the **same**
+  data store, and every probe requiring attribution is run twice. "Did I create
+  this finding myself" stops being a debate and becomes a measurement; a
+  byte-for-byte comparison of surfaces that shouldn't have changed gives an
+  unplanned regression sweep for free; and since the baseline is already the
+  pre-fix code, red-green evidence comes for free too. Proving the baseline's
+  validity (which commit / which point in time) **before** trusting the first
+  result is part of the rule — otherwise every "pre-existing" label is
+  unsupported.
+- **Phase 0 — fixture inventory.** The twin of the dependency inventory: per
+  entity, which seed record exists in the environment and which doesn't. A
+  missing one becomes `BLOCKED (fixture)` at design time. Its permanent home is
+  `.qa/environment.md` (template in `qa-memory.md`). Rationale: in that run,
+  almost every `BLOCKED` case was a **data** gap, not an environment gap, and
+  all of them were discovered mid-run.
+- **Phase 0 — the "can the baseline build even run" question.** The A/B
+  decision is made in Phase 0, because it affects both the case list (every
+  attribution-requiring probe runs twice) and the verdict; if it doesn't apply,
+  the reason is stated.
 
 ### Changed
 
-- **Karar kurallarına atıf boyutu (`release-gate.md`).** Tablo "açık S1/S2"
-  diyordu ama *kimin* olduğunu sormuyordu. Düz uygulandığında, ciddi bir açığı
-  kapatan değişiklik yanından geçtiği ilgisiz bir açık yüzünden bloke oluyor ve
-  bu **ikisini birden** üretimde bırakıyor. Artık karar değişikliğe
-  **atfedilebilen** bulgular üzerinden hesaplanır: A/B ile önceden var olduğu
-  doğrulanan bulgu `NO-GO` üretmez, kararı `GO WITH RISK`'te tutar ve kendi
-  ticket'ı olur. İki istisna onu yeniden değişikliğin hanesine yazar —
-  değişikliğin görevi onu düzeltmekse, ya da değişiklik onu daha erişilebilir /
-  daha ağır hale getiriyorsa. Yalnızca yeni build'de görünen bulgu tam ağırlıkla
-  regresyondur.
-- **Phase 3 — "önceden var" bir ölçümdür, sezgi değil.** Bu etiket artık kararı
-  değiştirdiği için bulgunun kendisiyle aynı kanıt standardına tabi: temel build
-  varsa prob orada da koşulur ve iki çıktı da eklenir; yoksa etiket *muhtemelen
-  önceden var* olarak yazılır.
-- **Non-negotiable #6'ya tasarım bağımsızlığı eklendi.** "Kendi düzeltmeni taze
-  gözle doğrula" yürütmeyi kapsıyordu, tasarımı değil: değişikliği yazan kişi
-  case listesine kendi kör noktalarını da miras bırakır — hiç düşünmediği şey
-  için case tasarlayamaz. Kendi yazdığı yeni kodun case'leri, onu yazan zihinden
-  başka bir şey tarafından tasarlanmalı veya gözden geçirilmeli.
-- **`test-data.md` — "değeri oku, ismi değil".** Sentetik değer kuralının format
-  kontrolünden kaçan hâli: enum/scope/durum kodu gibi tanımı başka yerde olan
-  her şeyin **değeri** tanımdan okunur, koddaki tanımlayıcı adı yeniden
-  yazılmaz. Adı `READ_ONLY` olup değeri `read:only` olan bir üye, tıpkı bir yazım
-  hatası gibi validasyondan döner ve gerçek bug'dan ayırt edilemez. O koşumda
-  iki sahte FAIL'in kaynağı buydu.
+- **Attribution dimension added to the verdict rules (`release-gate.md`).** The
+  table said "open S1/S2" without asking *whose*. Applied literally, a change
+  that fixes a serious defect gets blocked by an unrelated defect it merely
+  walked past — leaving **both** in production. The verdict is now computed on
+  findings **attributable to the change**: a finding verified as pre-existing
+  via A/B does not produce `NO-GO`, it caps the verdict at `GO WITH RISK` and
+  gets its own ticket. Two exceptions put it back on the change's account: the
+  change was supposed to fix it, or the change makes it more reachable / more
+  severe. Only a finding that appears solely on the new build is a full-weight
+  regression.
+- **Phase 3 — "pre-existing" is a measurement, not a hunch.** Since this label
+  now changes the verdict, it is held to the same evidence standard as the
+  finding itself: if a baseline exists, the probe is run against it too and
+  both outputs are attached; if not, the label is written as *likely
+  pre-existing*.
+- **Design independence added to non-negotiable #6.** "Verify your own fix with
+  fresh eyes" covered execution but not design: whoever wrote the change also
+  passes their own blind spots on to the case list — they cannot design a case
+  for something they never thought of. Cases for newly written code must be
+  designed or reviewed by something other than the mind that wrote it.
+- **`test-data.md` — "read the value, not the name".** The escape hatch from
+  the synthetic-value rule's format check: for anything whose definition lives
+  elsewhere (an enum member, a scope, a status code), the **value** is read
+  from that definition rather than re-derived from the identifier's name in
+  code. A member named `READ_ONLY` whose actual value is `read:only` fails
+  validation just like a typo would, and is indistinguishable from a real bug.
+  That run traced two fake FAILs back to exactly this.
 
 ## [1.7.0] — 2026-09-14
 
-Motivasyon: koşum retrospektifi değil — skill'in kendisinin gözden geçirilmesi
-(kullanıcı isteğiyle, yapı ve maliyet denetimi).
+Motivation: not a run retrospective — a review of the skill itself (at the
+user's request, a structure and cost audit).
 
 ### Added
 
-- **`references/cli-tool.md`:** üçüncü yüzey checklist'i — komut satırı araçları
-  ve ikili dosyalar. Sözleşme çıkış kodu + stdout/stderr + diske yapılan iş
-  olarak tanımlanır; argüman ayrıştırma, dosya sistemi düşman girdileri
-  (symlink döngüsü, sparse, NFC/NFD, izin hataları, ölü mount), sinyal ve
-  iptal, akış/pipe/TTY davranışı, config önceliği, ayrıcalık sınırları,
-  çapraz platform ve paketleme bölümleri. Daha önce yalnızca `backend-api` ve
-  `web-frontend` vardı — CLI yüzeyi tamamen kapsam dışıydı.
-- **Yüzey kategoriyi belirler kuralı (Phase 1):** bir kategori geçerli değilse
-  gerekçesiyle bir kez yazılır; sessizce atlanmaz, boş case de üretilmez.
+- **`references/cli-tool.md`:** a third surface checklist — command-line tools
+  and binaries. The contract is defined as exit code + stdout/stderr + what it
+  did to the disk; covers argument parsing, hostile filesystem input (symlink
+  cycles, sparse files, NFC/NFD, permission errors, dead mounts), signals and
+  cancellation, stream/pipe/TTY behaviour, config precedence, privilege
+  boundaries, cross-platform behaviour and packaging. Previously only
+  `backend-api` and `web-frontend` existed — the CLI surface was entirely out
+  of scope.
+- **The "surface decides the category" rule (Phase 1):** if a category doesn't
+  apply, it is stated once with the reason; never silently skipped, and no
+  empty cases are generated either.
 
 ### Changed
 
-- **Phase 6.5 yanlış yerdeydi:** dosyada Phase 6'dan *önce* geliyordu. Phase
-  6'dan sonraya alındı ve `release-gate.md`'ye işaret eden üç satıra indirildi.
-- **Soğuk bölümler `references/`'a taşındı** — SKILL.md 7.773 → 6.851 kelime
-  (her tetiklenmede yüklenen maliyet; ~1.450 kelime taşındı, yerine ~250 kelime
-  işaretçi ve ~130 kelime yeni kural girdi). Taşınanlar: PR/Sentinel koşum modları ve
-  paralel koşum kuralları → `run-modes.md`; kaçan bug postmortem döngüsü →
-  `postmortem.md`; retrospektif girdi formatı, genelleme testi, semver ve
-  release yordamı → `skill-maintenance.md`. Hepsinin yerinde tek satırlık
-  işaretçi var; hiçbiri normal bir koşumun sıcak yolunda değildi.
-- **`description` 1008 → 797 karakter.** 1024 sınırına 16 karakter kalmıştı;
-  eş anlamlı Türkçe tetikleyiciler ("test yap", "hata bulmaya calis",
-  "canliya cikmadan once kontrol et") budandı, "CLI command" eklendi.
+- **Phase 6.5 was in the wrong place:** it appeared *before* Phase 6 in the
+  file. Moved to after Phase 6 and trimmed to three lines pointing at
+  `release-gate.md`.
+- **Cold sections moved into `references/`** — SKILL.md went from 7,773 to
+  6,851 words (the cost loaded on every trigger; ~1,450 words moved out, ~250
+  words of pointers and ~130 words of new rules added in their place). Moved:
+  PR/Sentinel run modes and parallel-run rules → `run-modes.md`; the escaped-bug
+  postmortem loop → `postmortem.md`; retrospective entry format, the
+  generalisation test, semver and the release procedure → `skill-maintenance.md`.
+  Each has a one-line pointer in place; none of it was on a normal run's hot
+  path.
+- **`description` 1,008 → 797 characters.** Only 16 characters of headroom were
+  left before the 1,024 limit; redundant Turkish trigger synonyms ("test yap",
+  "hata bulmaya calis", "canliya cikmadan once kontrol et") were trimmed, and
+  "CLI command" was added.
 
 ## [1.6.0] — 2026-08-20
 
-Motivasyon: kullanıcıyla `.qa/` ölçekleme değerlendirmesi — klasör büyüdükçe
-kaybolmadan arananı bulma.
+Motivation: a `.qa/` scaling review with the user — finding things without
+getting lost as the folder grows.
 
 ### Added
 
-- **`.qa/README.md` indeksi:** dosya haritası + suite tablosu (prefix, kapsanan
-  alan, case sayısı, son koşum, karar) + kapsanmamış alanlar (tier D havuzu);
-  Phase 6'da güncel tutulur. İlke: düz dosyalar + ince indeks > derin klasör
-  hiyerarşisi — bu klasörün ana tüketicisi grep'ler.
-- **Suite-prefix'li case ID'leri:** her suite dosya başında benzersiz kısa slug
-  tanımlar (`KPN-001`), çıplak `TC-` yasak — suite çoğaldıkça çapraz referans
-  belirsizliğini önler. Şablon ve örnekler güncellendi.
-- **`.qa/reports/` klasörü:** raporlar `YYYY-MM-DD-<feature>.md` adıyla buraya;
-  `.qa` kökü 6 çekirdek dosyada sabit kalır.
-- **known-issues `Alan:` etiketi:** kayıt sonsuza dek büyür; ~30-40 kayıtta alan
-  bazlı bölünme etiketler sayesinde mekanik olur.
+- **`.qa/README.md` index:** file map + suite table (prefix, area covered, case
+  count, last run, verdict) + an uncovered-areas list (the tier D pool); kept
+  current in Phase 6. Principle: flat files + a thin index beat a deep folder
+  hierarchy — this folder's main consumer greps.
+- **Suite-prefixed case IDs:** every suite file declares a unique short slug at
+  the top (`KPN-001`), a bare `TC-` is forbidden — prevents cross-reference
+  ambiguity as suites multiply. Template and examples updated.
+- **`.qa/reports/` folder:** reports go here as `YYYY-MM-DD-<feature>.md`; the
+  `.qa` root stays fixed at six core files.
+- **known-issues `Area:` tag:** the log grows forever by design; past ~30-40
+  entries, splitting by area becomes mechanical thanks to the tags.
 
 ## [1.5.0] — 2026-08-20
 
-Motivasyon: kullanıcı direktifi — retro notlarındaki proje-bağımlı içerik skill
-reposunda durmamalı.
+Motivation: user directive — project-dependent content in retro notes must not
+stay in the skill repo.
 
 ### Changed
 
-- **Retro artık öneri defteri, koşum günlüğü değil (Phase 7):** girdi yalnızca
-  tarih + seviye + yüzey tipiyle anılır; içerik genelleştirilmiş dersler +
-  öneriler. Genelleşemeyen ders projenin `.qa/`'sına gider. Provenance
-  istisnası KALDIRILDI — günlükler de artık proje/ticket/domain terimi içeremez.
-- Mevcut `RETROSPECTIVES.md` ve `CHANGELOG.md` girdileri bu kurala göre
-  anonimleştirildi.
+- **Retro is now a proposals ledger, not a run diary (Phase 7):** an entry is
+  identified only by date + level + surface type; content is generalised
+  lessons + proposals. A lesson that can't be generalised goes to the
+  project's `.qa/` instead. The provenance exception was REMOVED — logs may no
+  longer contain a project/ticket/domain term either.
+- Existing `RETROSPECTIVES.md` and `CHANGELOG.md` entries were anonymised under
+  this rule.
 
 ## [1.4.0] — 2026-08-20
 
-Motivasyon: kullanıcı direktifi — "her test et dediğimde nasıl test edeceğini
-yeniden keşfetmesin; çıkarabildiğini projeden çıkarsın, çıkaramadığını bir kez
-sorup proje bazlı kaydetsin, değişince güncellesin."
+Motivation: user directive — "every time I say 'test this', don't rediscover
+how to test it; pull what you can from the project, ask once for what you
+can't and save it project-scoped, update it when it changes."
 
 ### Added
 
-- **Erişim playbook'u (Phase 0):** `environment.md`'ye kimlik doğrulama bölümü —
-  yüzey başına yöntem + credential edinme yolu (script/seed/env adı/vault yolu;
-  secret asla yazılmaz). Katı sıra: (1) dökümante edilmişse aynen kullan,
-  yeniden keşfetme; (2) değilse projeden çıkar (guard'lar, auth config, mevcut
-  script'ler, projenin kendi testleri); (3) çıkarılamıyorsa kullanıcıya BİR KEZ
-  sor ve cevabı manifeste yaz. Dökümante edilmiş bir bilgiyi ikinci kez sormak
-  süreç hatasıdır → retrospektife loglanır. Yöntem değişirse/bozulursa/yenisi
-  eklenirse Phase 6'da manifest güncellenir.
-- **Git release protokolü:** skill dizini git reposu oldu
-  (`unalcakir28/qa-engineer-skill`, private). Onaylı her sürüm artışı =
-  commit + `vX.Y.Z` tag + push (bu repo için kalıcı izin, 2026-08-20; proje
-  repolarını kapsamaz). Retro girdileri tag'siz commit'lenir.
+- **Access playbook (Phase 0):** an authentication section in
+  `environment.md` — per-surface method + how to obtain the credential
+  (script/seed/env name/vault path; the secret itself is never written). Strict
+  order: (1) if documented, use it as-is, don't rediscover it; (2) if not,
+  derive it from the project (guards, auth config, existing scripts, the
+  project's own tests); (3) if it can't be derived, ask the user ONCE and write
+  the answer into the manifest. Asking a documented fact a second time is a
+  process failure → logged in the retrospective. If the method
+  changes/breaks/a new one appears, the manifest is updated in Phase 6.
+- **Git release protocol:** the skill directory became a git repository
+  (`unalcakir28/qa-engineer-skill`, private). Every approved version bump =
+  commit + `vX.Y.Z` tag + push (standing permission for this repo only, granted
+  2026-08-20; does not cover project repositories). Retro entries are committed
+  without a tag.
 
 ## [1.3.0] — 2026-08-20
 
-Motivasyon: kullanıcıyla iyileştirme oturumu — 8 öneri tartışıldı, tamamı
-onaylandı.
+Motivation: an improvement session with the user — 8 proposals discussed, all
+approved.
 
 ### Added
 
-- **Kaçan bug postmortem döngüsü:** prod'a kaçan her bug için atıf (hangi koşum,
-  hangi kategori) → miss teşhisi (design gap / false PASS / parked / out of
-  scope) → regresyon case + known-issues + metrics `escaped` artışı →
-  genelleşiyorsa otomatik P1 önerisi.
-- **`.qa/environment.md` ortam manifesti:** Phase 0 envanteri artık kalıcı —
-  okunur, doğrulanır, Phase 6'da güncellenir; credential asla yazılmaz.
-- **`.qa/metrics.md` etkinlik metrikleri:** koşum başına bulgu/case, yanlış
-  alarm, sahte FAIL, BLOCKED, kaçan bug, maliyet — "gelişiyor muyuz"un sayısal
-  cevabı.
-- **`.qa/evidence/` kanıt arşivi:** FAIL/repro/örneklenmiş PASS'lerin ham
-  request/response'u case ID başına dosyada; **asla commit edilmez**
-  (`.gitignore`'a eklenir), budama sadece kullanıcı onayıyla.
-- **`.qa/contracts/` contract-diff:** public sözleşme snapshot'ı her koşumda
-  diff'lenir; breaking change otomatik tier A case + bulgu adayı olur.
-- **`references/test-data.md`:** fixture izolasyonunun tarifi — prefix şeması,
-  izolasyon seviyeleri, idempotent seed, sentetik değer geçerliliği (validasyonu
-  değil business kuralını test et), zaman sınırları, temizlik, secrets kuralları.
-- **PR modu:** tier A = PR diff'i; standart rapora ek yoğunlaştırılmış PR-yorumu
-  çıktısı; PR'a gönderim yalnızca açık onayla.
-- **Sentinel modu:** zamanlanmış/CI koşumları için tanım — L2 report-only,
-  tier C smoke + tier D rotasyon + son koşumdan beri değişen tier A; gözetimsiz
-  asla kod düzeltmez, veri budamaz, dışarı göndermez.
-- **`.qa/` versiyon kontrol kuralı (qa-memory.md):** `.qa/` commit edilir (takım
-  hafızası), `.qa/evidence/` ignore edilir, hiçbir `.qa` dosyası secret tutmaz.
+- **Escaped-bug postmortem loop:** for every bug that escaped to production —
+  attribution (which run, which category) → miss diagnosis (design gap / false
+  PASS / parked / out of scope) → regression case + known-issues entry +
+  `metrics` `escaped` increment → an automatic P1 proposal if it generalises.
+- **`.qa/environment.md` environment manifest:** the Phase 0 inventory is now
+  persistent — read, verified, updated in Phase 6; a credential is never
+  written into it.
+- **`.qa/metrics.md` effectiveness metrics:** findings/case, false alarms, fake
+  FAILs, BLOCKED count, escaped bugs, cost per run — a numeric answer to "are we
+  improving".
+- **`.qa/evidence/` evidence archive:** raw request/response for FAILs,
+  reproductions and sampled PASSes, one file per case ID; **never committed**
+  (added to `.gitignore`), pruned only with the user's consent.
+- **`.qa/contracts/` contract diff:** a public-contract snapshot diffed every
+  run; a breaking change automatically becomes a tier A case and a candidate
+  finding.
+- **`references/test-data.md`:** the recipe for fixture isolation — prefix
+  schemes, isolation levels, idempotent seeding, synthetic-value validity (test
+  the business rule, not validation), time boundaries, cleanup, secrets rules.
+- **PR mode:** tier A = the PR diff; a condensed PR-comment output in addition
+  to the standard report; posting to the PR only with explicit approval.
+- **Sentinel mode:** a definition for scheduled/CI runs — L2 report-only, tier
+  C smoke + tier D rotation + tier A for whatever changed since the last run;
+  unattended never fixes code, never prunes data, never sends anything
+  outward-facing.
+- **`.qa/` version-control rule (qa-memory.md):** `.qa/` is committed (team
+  memory), `.qa/evidence/` is ignored, no `.qa` file ever holds a secret.
 
 ## [1.2.0] — 2026-08-20
 
-Motivasyon: kullanıcı direktifi — skill her projede (frontend/backend, her
-stack) değişmeden çalışmalı.
+Motivation: user directive — the skill must work unchanged on any project
+(frontend/backend, any stack).
 
 ### Added
 
-- **Proje-bağımsızlık kuralı (Phase 7):** `SKILL.md` ve `references/` asla
-  proje/ticket/endpoint/framework-dekoratörü/domain kavramı içermez; her ders
-  yalnızca genelleştirilmiş kalıp olarak kabul edilir (turnusol: "bu cümle başka
-  bir repoda da aynen doğru mu?"). Genelleşemeyen bilgi projenin `.qa/`
-  hafızasına gider. Araç isimleri yalnızca ekosistem-başına seçim kurallı menü
-  olabilir. Günlükler (CHANGELOG/RETROSPECTIVES) provenance istisnasıdır.
+- **Project-independence rule (Phase 7):** `SKILL.md` and `references/` never
+  contain a project/ticket/endpoint/framework-decorator/domain concept; every
+  lesson is admitted only as a generalised pattern (litmus test: "would this
+  sentence be exactly as true in a different repo?"). Content that can't be
+  generalised goes to the project's `.qa/` memory instead. Tool names may only
+  appear as a per-ecosystem menu with a selection rule. Logs (CHANGELOG/
+  RETROSPECTIVES) are the provenance exception.
 
-### Denetim notu
+### Audit note
 
-- v1.2.0 itibarıyla SKILL.md + references/ tarandı: proje-spesifik içerik yok.
-  `automation-toolbox.md` (ekosistem menüsü) ve `oracles.md` (emsal API örneği)
-  kurala uygun bulundu.
+- As of v1.2.0, `SKILL.md` + `references/` were scanned: no project-specific
+  content found. `automation-toolbox.md` (the ecosystem menu) and `oracles.md`
+  (the peer-API example) were found to comply with the rule.
 
 ## [1.1.0] — 2026-08-20
 
-Motivasyon: ilk gerçek saha koşumunun retrospektifi (2026-08-20, L3, backend
-API, 120 case, GO). Bkz. `RETROSPECTIVES.md` → 2026-08-20.
+Motivation: retrospective of the first real field run (2026-08-20, L3, backend
+API, 120 cases, GO). See `RETROSPECTIVES.md` → 2026-08-20.
 
 ### Added
 
-- **Phase 7 — Skill retrospective:** her koşumun sonunda skill kendini
-  değerlendirir, `RETROSPECTIVES.md`'ye girdi yazar, iyileştirme önerilerini
-  kullanıcıya sunar; skill dosyaları yalnızca onayla değişir.
-- **Versiyonlama:** front-matter `version` alanı + bu CHANGELOG; PATCH/MINOR/MAJOR
-  kuralları Phase 7'de tanımlı.
-- **Fixture izolasyonu kuralı (Phase 2):** state mutasyonu yapan her case kendi
-  fixture'ını kurar veya geri alır; paralel ajanlar asla veri paylaşmaz, shared
-  state'e dokunan grup tek başına koşar. (Koşumda 3 sahte FAIL üretmişti.)
-- **"Önce kendi harness'ını suçla" refleksi (Phase 2):** beklenmedik toplu
-  FAIL'de response body loglanır, validasyon reddi ile business reddi ayrılır.
-  (Koşumda format validasyonundan geçmeyen sentetik bir değer bir case grubunun
-  tamamına sahte 400 döndürmüştü.)
-- **Subagent kanıt sözleşmesi + PASS örneklemesi (Phase 2 paralel bölümü):** ham
-  request/response zorunlu; yüksek riskli kategorilerden PASS örneklemi ana
-  session'da yeniden koşulur; tutmayan örneklem o ajanın tüm grubunu yeniden
-  doğrulatır. (Koşumda TC-099 FAIL'i subagent'ın kendi test hatası çıkmıştı.)
-- **Ortam yetenek envanteri (Phase 0):** dış bağımlılıklar tasarım anında
-  gerçek/mock/yok olarak işaretlenir; yok olanların case'leri baştan
-  `BLOCKED (ortam)` alır. (Koşumda bir dış RPC bağımlılığının yokluğu koşum
-  sırasında keşfedilmişti.)
-- **Seviye sorusuna maliyet etiketi (Kickoff):** her seviye seçeneği tahmini
-  case sayısı + süre/token maliyetiyle sunulur.
-- **BLOCKED borç takibi (Phase 4 + 6):** raporda "başka ortamda koşulacaklar"
-  listesi; `regression-log.md`'ye sonraki koşumun girdisi olarak devredilir.
-- **Suite budama stratejisi (Phase 6):** case'ler core/swept olarak etiketlenir;
-  her koşumda koşulan çekirdek küçük tutulur, temiz geçenler rotasyon havuzuna
-  iner, benzer case'ler birleştirilir.
+- **Phase 7 — Skill retrospective:** at the end of every run, the skill
+  evaluates itself, writes an entry to `RETROSPECTIVES.md`, and presents
+  improvement proposals to the user; skill files change only with approval.
+- **Versioning:** a front-matter `version` field + this CHANGELOG; PATCH/MINOR/
+  MAJOR rules defined in Phase 7.
+- **Fixture isolation rule (Phase 2):** every case that mutates state creates
+  or restores its own fixture; parallel agents never share data, and a group
+  touching shared state runs alone. (This run had produced 3 fake FAILs.)
+- **"Suspect your own harness first" reflex (Phase 2):** on an unexpected
+  cluster of FAILs, the response body is logged and validation rejections are
+  separated from business rejections. (In that run, a synthetic value that
+  failed format validation had returned a fake 400 across an entire case
+  group.)
+- **Subagent evidence contract + PASS sampling (Phase 2, parallel section):**
+  raw request/response is mandatory; a PASS sample from high-risk categories is
+  re-run in the main session; a sample that doesn't hold re-verifies that
+  agent's entire group. (In that run, TC-099's FAIL turned out to be the
+  subagent's own test error.)
+- **Environment capability inventory (Phase 0):** external dependencies are
+  marked real/mocked/absent at design time; cases needing an absent one get
+  `BLOCKED (environment)` from the start. (In that run, the absence of an
+  external RPC dependency was discovered mid-run.)
+- **Cost tag on the level question (Kickoff):** every level option is presented
+  with an estimated case count + time/token cost.
+- **BLOCKED debt tracking (Phase 4 + 6):** a "to run in another environment"
+  list in the report; carried into `regression-log.md` as input for the next
+  run.
+- **Suite pruning strategy (Phase 6):** cases are tagged core/swept; the
+  always-run core stays small, clean-passing cases demote to the rotation pool,
+  near-duplicate cases are merged.
 
-### Notlar
+### Notes
 
-- Severity rubrik'i önerisi uygulanmadı: rubrik zaten
-  `references/reporting.md`'de mevcuttu (S1–S4 + Risk + Question).
+- The severity-rubric proposal was not applied: the rubric already existed in
+  `references/reporting.md` (S1–S4 + Risk + Question).
 
 ## [1.0.0] — 2026-08-20
 
-- İlk sürüm: kickoff (seviye + fix/report), Phase 0–6.5, 20 satırlık kategori
-  kataloğu, tier A–D kapsam modeli, non-negotiable kanıt kuralları, model
-  politikası (tasarım/karar Opus, koşum Sonnet), `.qa/` proje hafızası,
-  references/ altında 10 yardımcı doküman.
+- Initial release: kickoff (level + fix/report), Phase 0–6.5, a 20-row category
+  catalogue, the tier A–D scope model, the non-negotiable evidence rules, the
+  model policy (design/verdict on Opus, execution on Sonnet), `.qa/` project
+  memory, 10 supporting documents under `references/`.

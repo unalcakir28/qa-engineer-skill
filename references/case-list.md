@@ -11,34 +11,34 @@ over with the report.
 - Without `.qa/`: `test-cases-<feature>-<YYYY-MM-DD>.md` next to the report.
 
 One file per feature/area, not per run. Runs are recorded inside it (see
-`## Koşum geçmişi` below) and in `.qa/regression-log.md`.
+`## Run history` below) and in `.qa/regression-log.md`.
 
 ## Format
 
 ```markdown
-# Test Case Listesi — Kupon indirimi
-Case ID prefix: **KPN** (proje genelinde benzersiz; çapraz referanslar `KPN-xxx`)
-Branch/commit: feature/coupon @ abc1234 | Ortam: local | Yazan: qa-engineer
-Tier planı: A=kupon indirimi · B=sipariş toplamı, stok · C=login+sipariş smoke · D=webhook
+# Test Case List — Coupon discount
+Case ID prefix: **KPN** (unique project-wide; cross-references use `KPN-xxx`)
+Branch/commit: feature/coupon @ abc1234 | Environment: local | Author: qa-engineer
+Tier plan: A=coupon discount · B=order total, stock · C=login+order smoke · D=webhook
 
-## Özet
-Toplam 47 case — 5 happy, 8 fonksiyonel, 11 negatif, 9 sınır, 4 yetki,
-6 durum/eşzamanlılık, 4 veri bütünlüğü. Atlanan: #17 a11y (UI değişmedi),
-#16 performans (dev DB'de tek kayıt var).
+## Summary
+Total 47 cases — 5 happy, 8 functional, 11 negative, 9 boundary, 4 permission,
+6 state/concurrency, 4 data integrity. Skipped: #17 a11y (UI unchanged),
+#16 performance (dev DB has a single record).
 
-## Case'ler
+## Cases
 
-| ID | Tier | Kategori | Senaryo | Ön koşul / veri | Adımlar | Beklenen | Durum | Kanıt |
+| ID | Tier | Category | Scenario | Precondition / data | Steps | Expected | Status | Evidence |
 |----|------|----------|---------|-----------------|---------|----------|-------|-------|
-| KPN-001 | A | Happy | Geçerli kupon %10 indirim uygular | aktif kupon `SAVE10`, sepet 100₺ | POST /orders (coupon=SAVE10) | 201, total=90₺, DB'de discount=10 | PASS | resp 201, order#881 |
-| KPN-014 | A | Sınır | Kupon tutarı sepet toplamına eşit | kupon 100₺, sepet 100₺ | POST /orders | 201, total=0, negatife düşmez | FAIL (S2) | total=-0.01 → BUG-016 |
-| KPN-021 | A | Eşzamanlılık | Aynı kupon 20 paralel istekte | tek kullanımlık kupon | 20× POST paralel | 1 başarılı, 19 reddedilir | FAIL (S1) | 3 başarılı → BUG-017 |
-| KPN-033 | B | Veri bütünlüğü | İndirim iptali sonrası toplam tutarlı | KPN-001'in siparişi | DELETE /orders/881 | stok geri, discount kaydı silinir | PASS | DB kontrol edildi |
-| KPN-041 | C | Kritik akış | Login smoke | — | POST /auth/login | 200 + token | PASS | |
-| KPN-048* | A | Keşifsel | Kupon süresi istek sırasında doluyor | kupon 5sn sonra biter | POST /orders (t=6sn) | 400 expired | PASS | koşum sırasında eklendi |
+| KPN-001 | A | Happy | Valid coupon applies 10% discount | active coupon `SAVE10`, cart ₺100 | POST /orders (coupon=SAVE10) | 201, total=₺90, discount=10 in DB | PASS | resp 201, order#881 |
+| KPN-014 | A | Boundary | Coupon amount equals cart total | coupon ₺100, cart ₺100 | POST /orders | 201, total=0, never goes negative | FAIL (S2) | total=-0.01 → BUG-016 |
+| KPN-021 | A | Concurrency | Same coupon on 20 parallel requests | single-use coupon | 20× POST in parallel | 1 succeeds, 19 rejected | FAIL (S1) | 3 succeeded → BUG-017 |
+| KPN-033 | B | Data integrity | Total stays consistent after discount cancellation | KPN-001's order | DELETE /orders/881 | stock restored, discount record deleted | PASS | verified in DB |
+| KPN-041 | C | Critical flow | Login smoke | — | POST /auth/login | 200 + token | PASS | |
+| KPN-048* | A | Exploratory | Coupon expires mid-request | coupon expires in 5s | POST /orders (t=6s) | 400 expired | PASS | added during the run |
 
-## Koşum geçmişi
-| Tarih | Commit | Koşulan | PASS | FAIL | BLOCKED | NOT RUN | Karar |
+## Run history
+| Date | Commit | Run | PASS | FAIL | BLOCKED | NOT RUN | Verdict |
 |-------|--------|---------|------|------|---------|---------|-------|
 | 2026-08-20 | abc1234 | 47 | 43 | 3 | 1 | 0 | NO-GO |
 ```
@@ -77,13 +77,13 @@ the one thing that makes the whole file worthless.
 
 ## Writing good cases
 
-- **One assertion per case.** "Geçersiz e-posta reddedilir *ve* hata mesajı
-  Türkçe" is two cases; when it fails you want to know which half broke.
-- **Concrete data, not descriptions.** `SAVE10`, `100₺`, `1000 karakter` — not
-  "geçersiz değer". Someone else (or you, next month) must be able to re-run it
+- **One assertion per case.** "Invalid e-mail is rejected *and* the error message
+  is localised" is two cases; when it fails you want to know which half broke.
+- **Concrete data, not descriptions.** `SAVE10`, `₺100`, `1,000 characters` — not
+  "an invalid value". Someone else (or you, next month) must be able to re-run it
   without re-deriving the inputs.
-- **Expected must be checkable and anchored.** Not "hata verir" but "400 +
-  `code=COUPON_EXPIRED`, sipariş oluşmaz". If nothing in the requirements or
+- **Expected must be checkable and anchored.** Not "returns an error" but "400 +
+  `code=COUPON_EXPIRED`, no order created". If nothing in the requirements or
   schema anchors your expectation, that's an open question, not a case.
 - **Include the verification point**, not just the request: which DB row, which
   log line, which counter you'll look at.
@@ -93,7 +93,7 @@ the one thing that makes the whole file worthless.
 ## Lifecycle across runs
 
 1. **First run:** design the list, deliver it, execute it, append the run to
-   `## Koşum geçmişi`.
+   `## Run history`.
 2. **Later runs on the same area:** re-run the existing cases as the regression
    suite, then append new cases for whatever the new diff introduced. Mark cases
    that no longer apply as `SKIP-N/A` with a note — delete rather than leave a

@@ -15,8 +15,8 @@ The heuristics below are for everything the spec doesn't cover — and there is
 always a remainder, because specs describe the happy intent and rarely the edges.
 Working testers use a set of consistency heuristics (Bolton & Bach's
 **FEW HICCUPPS**): a behaviour is suspect when it's inconsistent with something it
-ought to be consistent with. Name the one you used — it turns "bence yanlış" into
-an argument the developer can act on.
+ought to be consistent with. Name the one you used — it turns "I think this is
+wrong" into an argument the developer can act on.
 
 ## The heuristics
 
@@ -61,7 +61,7 @@ Write down what each case is checked against — the **basis** — and keep it i
 case list's `Basis` column:
 
 - `ticket §3` — an explicit acceptance criterion
-- `şema: unique(tenant_id, email)` — a constraint
+- `schema: unique(tenant_id, email)` — a constraint
 - `docs: /api/orders` — a documented promise
 - `oracle: history` — the previous version behaved differently
 - `oracle: product` — sibling endpoints do it another way
@@ -76,5 +76,5 @@ Then use it in both directions:
    the ones you deliberately left untested.
 
 That second direction is what a naive sweep never does, and it's the difference
-between "47 case koştum" and "gereksinimlerin tamamı kapsandı, şu üçü hariç ve
-sebebi şu".
+between "I ran 47 cases" and "every requirement is covered except these three,
+and here's why".

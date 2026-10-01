@@ -1,566 +1,643 @@
-# qa-engineer — Öneri defteri (koşum retrospektifleri)
+# qa-engineer — Proposals ledger (run retrospectives)
 
-Her koşumun sonunda (Phase 7) bir girdi. **Bu bir öneri defteridir, koşum
-günlüğü değil:** koşum yalnızca tarih + seviye + yüzey tipiyle anılır; proje,
-ticket, endpoint veya domain terimi buraya girmez (koşumun hikâyesi ilgili
-projenin `.qa/` klasöründedir). Öneriler P1 (yanlış sonuca yol açtı) / P2
-(ciddi zaman kaybı) / P3 (cila) olarak derecelendirilir. Tekrarlayan öneri
-otomatik P1'e yükselir. Uygulanan öneriler `CHANGELOG.md`'ye taşınır ve burada
-`UYGULANDI (vX.Y.Z)` olarak kapatılır.
+One entry at the end of every run (Phase 7). **This is a proposals ledger, not
+a run diary:** a run is identified only by date + level + surface type;
+no project, ticket, endpoint or domain term goes in here (the run's own story
+lives in that project's `.qa/` folder). Proposals are rated P1 (caused a wrong
+result) / P2 (significant time lost) / P3 (polish). A recurring proposal is
+automatically promoted to P1. Applied proposals move into `CHANGELOG.md` and
+are closed here as `APPLIED (vX.Y.Z)`.
 
 ---
 
 ## 2026-08-20 — L3, backend API
 
-- **Case:** 120 · **Sonuç:** 117 PASS / 1 FAIL (S2, düzeltildi) / 1 BLOCKED /
-  1 SKIP · **Karar:** GO · **Skill sürümü:** 1.0.0
+- **Cases:** 120 · **Result:** 117 PASS / 1 FAIL (S2, fixed) / 1 BLOCKED /
+  1 SKIP · **Verdict:** GO · **Skill version:** 1.0.0
 
-**Genelleştirilmiş dersler:**
+**Generalised lessons:**
 
-- Katalog satırı 8 (durum & sıra), "kapanmış kaydı aynı sebeple yeniden tetikle"
-  case'iyle doğaçlamanın bulamayacağı bir S2 yakaladı; kırmızı-yeşil kuralı ve
-  kendini-sertifikalandırma yasağı düzeltmenin kanıtını sağlamlaştırdı.
-- State mutasyonu yapan senaryolar izole fixture olmadan sonraki case'lere sahte
-  FAIL sızdırdı (3 adet).
-- Format validasyonundan geçmeyen sentetik bir değer, bir case grubunun tamamını
-  business kuralına ulaşmadan reddettirdi — neredeyse kod bug'ı olarak
-  raporlanacaktı.
-- Bir subagent FAIL'i, subagent'ın kendi hatalı isteğinden kaynaklandı; ham
-  request/response olmadan ayırt edilemiyordu.
-- Bir dış bağımlılığın hedef ortamda bulunmadığı koşum ortasında keşfedildi —
-  ilgili case'lere boşa efor harcandı.
+- Catalogue row 8 (state & sequence), with the "re-trigger a closed record for
+  the same reason" case, caught an S2 that improvisation would not have found;
+  the red-green rule and the self-certification ban strengthened the fix's
+  evidence.
+- Scenarios that mutated state leaked fake FAILs into later cases without
+  fixture isolation (3 instances).
+- A synthetic value that failed format validation caused an entire case group
+  to be rejected before it ever reached the business rule — it was one step
+  from being reported as a code bug.
+- One subagent FAIL was caused by the subagent's own malformed request; it was
+  indistinguishable without the raw request/response.
+- An external dependency's absence from the target environment was discovered
+  mid-run — wasted effort on the affected cases.
 
-**Öneriler:**
+**Proposals:**
 
-- P1 — fixture izolasyonu kuralı → UYGULANDI (v1.1.0)
-- P1 — harness-first şüphe refleksi → UYGULANDI (v1.1.0)
-- P2 — subagent ham kanıt + PASS örneklemesi → UYGULANDI (v1.1.0)
-- P2 — Phase 0 ortam yetenek envanteri → UYGULANDI (v1.1.0)
-- P2 — seviye seçeneklerine maliyet etiketi → UYGULANDI (v1.1.0)
-- P3 — BLOCKED borç takibi → UYGULANDI (v1.1.0)
-- P3 — suite budama stratejisi → UYGULANDI (v1.1.0)
-- P3 — severity rubrik'i önerisi KAPANDI: rubrik zaten
-  `references/reporting.md`'de varmış; sorun keşfedilebilirlikti, Phase 4 zaten
-  oraya yönlendiriyor.
+- P1 — fixture isolation rule → APPLIED (v1.1.0)
+- P1 — harness-first suspicion reflex → APPLIED (v1.1.0)
+- P2 — subagent raw evidence + PASS sampling → APPLIED (v1.1.0)
+- P2 — Phase 0 environment capability inventory → APPLIED (v1.1.0)
+- P2 — cost tag on level options → APPLIED (v1.1.0)
+- P3 — BLOCKED debt tracking → APPLIED (v1.1.0)
+- P3 — suite pruning strategy → APPLIED (v1.1.0)
+- P3 — severity rubric proposal CLOSED: the rubric already existed in
+  `references/reporting.md`; the problem was discoverability, and Phase 4
+  already points there.
 
-**Açık öneri (onay bekliyor):** yok.
+**Open proposal (awaiting approval):** none.
 
 ---
 
-## 2026-08-21 · L3 · backend API (para akışı + zamanlanmış iş + escrow muhasebesi)
+## 2026-08-21 · L3 · backend API (money flow + scheduled job + escrow accounting)
 
-**Genelleştirilmiş dersler:**
+**Generalised lessons:**
 
-- **Bir endpoint HTTP 2xx döndüğünde işin bitmiş olduğu varsayımı, en verimli
-  sahte FAIL üreticisi.** Yazma isteği bir kuyruğa devrettiğinde yanıt, kalıcı
-  duruma değil "kayıt alındı"ya işaret eder; hemen ardından yapılan bakiye/durum
-  okuması işçiyle yarışır. Bu koşumda tek başına 3 phantom FAIL üretti ve bunlar
-  ürün bugu olarak raporlanmaya bir adım kalmıştı. Kural adayı: *durum
-  değiştiren asenkron bir akışta assert etmeden önce terminal duruma geçişi
-  beklemek zorunlu; bekleme yoksa case tasarımı eksik sayılır.*
-- **Para karşılaştırmasında dilin varsayılan sayı tipi kullanılamaz.** Ondalık
-  bakiyeler üzerinde float çıkarması (`100000 - 99999.01`) kuruş seviyesinde
-  yapay uyuşmazlık üretti ve "MISMATCH" olarak raporlanmaya hazırdı. Kural
-  adayı: *para değişmezleri yalnızca ondalık/rasyonel tipte (ya da tamsayı kuruş)
-  karşılaştırılır.*
-- **Paylaşılan harness, tek bir yanlış yol ile birden çok ajanın kanıtını
-  sessizce bozar.** Yanlış endpoint yolu 404 döndürüyordu; 404'ü "yetki reddi"
-  sanan bir yetki case'i sahte PASS üretebilirdi. İki ajan bağımsız olarak
-  yakaladı. Kural adayı: *paylaşılan harness'ın her endpoint yolu, ilk kullanımda
-  "yol var mı" ayrımıyla doğrulanmalı (404 ≠ 401/403); yol düzeltmesi koşan tüm
-  ajanlara duyurulmalı.*
-- **Case'in kendi formülü de bir dayanak hatası olabilir.** Bir muhasebe
-  değişmezini net/brüt karıştıran şekilde yazmıştım; ajan "FAIL" raporladı ve
-  doğru teşhisi kendisi koydu (artık tam olarak iade edilen tutara eşitti).
-  Sistem doğruydu, spec yanlıştı. Kural adayı zaten var (*basis'in kendisi
-  kusurlu olabilir*), ama **sayısal değişmezler** için özel olarak zayıf: bir
-  koruma değişmezi yazarken net akış ile brüt akışın ayrıştırılması gerekiyor.
-- **Uzun bekleme gerektiren case'ler (cron/periyodik iş) ajan bloklar ve rapor
-  gecikir.** İki ajan kendi arka plan beklemesinde durdu; sonuçları ancak
-  "elindekini raporla" mesajıyla alındı. Bu arada aynı özelliğin deterministik
-  bir eşdeğeri (kuyruğa doğrudan iş bırakmak, ya da tetikleyici koşulun
-  DB'deki izini kontrol etmek) saniyeler sürüyordu. Kural adayı: *zamana bağlı
-  bir mekanizma için önce deterministik eşdeğerini koş, gerçek zamanlayıcıyı
-  yalnızca bir kez uçtan uca doğrulamak için bekle; bekleme case'lerini ayrı bir
-  gruba topla ki rapor onlara takılmasın.*
-- **Bir ajanın "FAIL"i, case'in beklentisi kodun belgelenmiş sözleşmesinden
-  daha katı olduğu için de gelebilir.** Güvenlik davranışı doğruydu (kredi yok,
-  gürültülü hata, DLQ alarmı); yalnızca benim beklediğim teşhis alanları
-  dolmuyordu. Ph3 doğrulaması bunu bulguya dönüşmeden ayıkladı.
-- **Paralel ajanların doğrudan DB mutasyonları, başka ajanın global değişmez
-  taramasında "ihlal" olarak görünür.** Bir ajanın kasıtlı olarak bozduğu satır,
-  başka ajanın bütünlük taramasını FAIL'e düşürdü; `referenceId` ön eki
-  sayesinde izlenebildi. Kural adayı: *global değişmez taraması yapan case,
-  ihlal bulduğunda satırı fixture ön ekiyle sahiplendirmeli; sahibi başka bir
-  ajansa bu bir ürün bulgusu değildir.*
+- **The assumption that an endpoint returning HTTP 2xx means the work is done is
+  the most productive fake-FAIL generator there is.** When a write request hands
+  the work off to a queue, the response signals "accepted", not persisted state;
+  a balance/status read immediately after races the worker. In this run alone it
+  produced 3 phantom FAILs, one step away from being reported as product bugs.
+  Rule candidate: *in a status-changing asynchronous flow, waiting for the
+  transition to a terminal state before asserting is mandatory; without that
+  wait, the case design is incomplete.*
+- **A money comparison cannot use the language's default numeric type.** A float
+  subtraction on decimal balances (`100000 - 99999.01`) produced an artificial
+  cent-level mismatch, ready to be reported as "MISMATCH". Rule candidate:
+  *money invariants are compared only in decimal/rational type (or integer
+  cents).*
+- **A shared harness silently corrupts multiple agents' evidence with a single
+  wrong path.** A wrong endpoint path was returning 404; a permission case that
+  mistook 404 for "access denied" could have produced a fake PASS. Two agents
+  caught it independently. Rule candidate: *every endpoint path in a shared
+  harness must be verified on first use with a "does the path exist" check
+  (404 ≠ 401/403); a path fix must be announced to every agent running.*
+- **A case's own formula can itself be a basis error.** I had written an
+  accounting invariant that mixed up net and gross; the agent reported "FAIL"
+  and diagnosed it correctly itself (the amount now exactly equalled the
+  refunded total). The system was right, the spec was wrong. A rule candidate
+  already exists (*the basis itself can be defective*), but it is specifically
+  weak for **numeric invariants**: writing a protective invariant requires
+  separating the net flow from the gross flow.
+- **Cases that need a long wait (cron/periodic job) block the agent and delay
+  the report.** Two agents stalled on their own background wait; results only
+  came back after a "report what you have" message. Meanwhile a deterministic
+  equivalent of the same feature (dropping the job directly on the queue, or
+  checking the trigger condition's trace in the DB) took seconds. Rule
+  candidate: *for a time-dependent mechanism, run the deterministic equivalent
+  first, and wait for the real scheduler only once, for an end-to-end check;
+  group waiting cases separately so the report doesn't get stuck on them.*
+- **An agent's "FAIL" can also come from the case's expectation being stricter
+  than the code's documented contract.** The security behaviour was correct (no
+  credit, a loud error, a DLQ alarm); only the diagnostic fields I expected
+  weren't populated. Phase 3 verification filtered this out before it became a
+  finding.
+- **Parallel agents' direct DB mutations show up as a "violation" in another
+  agent's global invariant sweep.** A row that one agent deliberately corrupted
+  tripped another agent's integrity sweep into a FAIL; the `referenceId` prefix
+  made it traceable. Rule candidate: *a case running a global invariant sweep
+  must attribute a found violation to a fixture prefix when it finds one; if the
+  owner is another agent, it is not a product finding.*
 
-**Öneriler:**
+**Proposals:**
 
-- **P1 — Asenkron kabul (202/201-then-worker) kalıbı için zorunlu bekleme
-  kuralı.** `SKILL.md` Phase 2'ye ve `references/backend-api.md`'ye: bir yazma
-  isteği işi kuyruğa/işçiye devrediyorsa, assert öncesi terminal duruma geçişi
-  beklemek case tasarımının parçasıdır. (Bu koşumda 3 phantom FAIL; bir sonraki
-  koşumda tekrar ederse "harness-first şüphe" kuralı bunu yakalıyor ama maliyeti
-  yüksek.)
-- **P1 — Para değişmezlerinde ondalık aritmetiği zorunluluğu.** `SKILL.md`
-  "Assert values, not vibes" maddesine bir cümle: para/oran karşılaştırmaları
-  dilin float tipiyle yapılmaz. (Bu koşumda 1 phantom finding.)
-- **P2 — Paylaşılan harness'ta endpoint yolu doğrulama refleksi.** `references/
-  test-data.md` veya `backend-api.md`: yolun varlığını 404/401 ayrımıyla teyit
-  et; paylaşılan harness düzeltmesini koşan ajanlara duyur.
-- **P2 — Zaman-bağımlı case'ler için "deterministik eşdeğer önce" kuralı** ve
-  bekleme case'lerinin ayrı gruba toplanması (`SKILL.md` paralelleştirme
-  bölümü).
-- **P3 — Global değişmez taramalarında ihlal sahipliği.** Paralel koşumda bulunan
-  ihlal, fixture ön ekiyle sahiplendirilmeden bulgu sayılmaz.
+- **P1 — a mandatory-wait rule for the async-acceptance (202/201-then-worker)
+  pattern.** Into `SKILL.md` Phase 2 and `references/backend-api.md`: if a write
+  request hands the work off to a queue/worker, waiting for the transition to a
+  terminal state before asserting is part of the case design. (3 phantom FAILs
+  in this run; if it recurs in a future run, the "harness-first suspicion" rule
+  catches it but at high cost.)
+- **P1 — decimal-arithmetic requirement for money invariants.** A sentence added
+  to `SKILL.md`'s "Assert values, not vibes" item: money/rate comparisons are
+  never done in the language's float type. (1 phantom finding in this run.)
+- **P2 — endpoint-path verification reflex in a shared harness.** In
+  `references/test-data.md` or `backend-api.md`: confirm a path exists via the
+  404/401 distinction; announce a shared-harness path fix to every agent
+  running.
+- **P2 — a "deterministic equivalent first" rule for time-dependent cases**, and
+  grouping waiting cases separately (`SKILL.md` parallelisation section).
+- **P3 — violation ownership in global invariant sweeps.** A violation found
+  during a parallel run doesn't count as a finding until attributed to a
+  fixture prefix.
 
-**Açık öneri (onay bekliyor):** yukarıdaki P1/P1/P2/P2/P3 — kullanıcı onayı
-bekleniyor. Onaylanırsa MINOR sürüm (yeni kurallar davranışı değiştiriyor):
+**Open proposal (awaiting approval):** the P1/P1/P2/P2/P3 above — awaiting
+user approval. If approved, a MINOR version bump (new rules change behaviour):
 v1.7.0.
 
 ---
 
-## 2026-08-27 · L3 · backend API (görünürlük/bilgi-açığı sınırı)
+## 2026-08-27 · L3 · backend API (visibility / information-disclosure boundary)
 
-**Skill'in yapısı neyi yakaladı:**
+**Caught thanks to structure:**
 
-- **Kontrat taraması, iki review turunun kaçırdığı bulguyu buldu.** Feature iki
-  ayrı kod-review turundan geçmişti; bulunan iki S3'ten birini (iç bayrağın
-  istemci sözleşmesine sızması) yakalayan şey, keşif charter'ını "şemayı
-  sistematik tara" biçiminde koşmak oldu: yayınlanan API şemasında hedef alanı
-  taşıyan **tüm** uçları programatik olarak çıkarmak. Tek tek uç denemek bunu
-  bulmuyordu; şema grafiği buluyordu.
-- **Kardeş uç kıyası, ikinci S3'ün oracle'ı oldu.** "Aynı ailedeki üç uç bu
-  girdiye 400 dönüyor, bu 500 dönüyor" — spec'te yazmayan bir kuralı
-  anchor'layan en güçlü kanıt buydu.
-- **"Harness'ından şüphe et" kuralı bir yanlış alarmı raporlanmadan önce kesti.**
-  Yetki bypass'ı gibi görünen davranışın sebebi, testin kendi verdiği yükseltilmiş
-  roldü. Guard kodunu okumak, IDOR raporlamaktan kurtardı.
+- **A contract sweep found what two review rounds missed.** The feature had
+  gone through two separate code-review rounds; what caught one of the two
+  S3s found (an internal flag leaking into the client contract) was running
+  the exploratory charter as "scan the schema systematically": programmatically
+  extracting **every** endpoint carrying the target field from the published
+  API schema. Trying endpoints one by one didn't find it; the schema graph did.
+- **Sibling-endpoint comparison was the second S3's oracle.** "Three endpoints
+  in the same family return 400 for this input, this one returns 500" — the
+  strongest evidence anchoring a rule that wasn't written in the spec.
+- **The "suspect your harness" rule cut off a false alarm before it was
+  reported.** What looked like a permission bypass was caused by the elevated
+  role the test itself had granted. Reading the guard code saved it from being
+  reported as an IDOR.
 
-**Süre/gürültü maliyeti:**
+**Time/noise cost:**
 
-- **Derleme adımı, çalışan watch sürecini öldürdü.** Doğrulama turunun ortasında
-  "hepsini kontrol et" komutunu koşmak, watch sürecinin okuduğu build çıktısını
-  yeniden yazdı; uygulama modül bulamayıp çöktü ve tüm doğrulama istekleri
-  bağlantı hatası döndü. Bir tur boşa gitti.
-- **Ücret/bakiye ön koşulu, üç case'i ajan tarafında BLOCKED yaptı.** Yazma yolu
-  case'leri paylaşılan fixture'a dokunmama kuralı yüzünden bloke oldu; ana
-  oturumda ön koşul sağlanınca üçü de saniyeler içinde koştu. Fixture'ın
-  "yazma yolu ön koşulları" baştan kurulmalıydı.
+- **A build step killed a running watch process.** Running an "check
+  everything" command mid-verification-pass rewrote the build output the watch
+  process was reading; the app couldn't find its module and crashed, and every
+  verification request returned a connection error. One round wasted.
+- **A fee/balance precondition left three cases BLOCKED on the agent side.**
+  Write-path cases were blocked by the rule against touching the shared
+  fixture; once the main session set up the precondition, all three ran in
+  seconds. The fixture's "write-path preconditions" should have been set up
+  from the start.
 
-**İmprovize ettiğim, skill'in söylemesi gerekenler:**
+**Things I improvised that the skill should say:**
 
-- Fixture kurulumunu **ürünün kendi ORM'iyle** yazmak (ham SQL yerine): zorunlu
-  alan/ilişki hatalarını okunur biçimde veriyor, iterasyonu hızlandırıyor.
-- Salt-okunur paylaşılan fixture + mutasyon yapan case'e **kendi izole kopyasını
-  yaratma** zorunluluğu ayrımını, ajan görev metnine açıkça yazmak.
-- **Global durum gerektiren case'leri ana oturuma saklamak** (ör. "sistemde hiç
-  X yok"): paralel ajanlardan hiçbiri koşamaz, çünkü ötekileri zehirler.
+- Writing fixture setup **through the product's own ORM** (instead of raw
+  SQL): it surfaces required-field/relationship errors readably and speeds up
+  iteration.
+- Writing the distinction explicitly into the agent brief: a read-only shared
+  fixture versus a mutating case's obligation to **create its own isolated
+  copy**.
+- **Keeping cases that need global state in the main session** (e.g. "there is
+  no X anywhere in the system"): no parallel agent can run them, because they
+  poison the others.
 
-**Zorlanan non-negotiable:** "her FAIL'i kendin yeniden koş" kuralı, bu koşumda
-en yüksek getirili kural oldu — üç ajan bulgusunun ikisi doğrulandı, biri
-(yetki) çürütüldü, ve bir öncekinden kalan bir S1 iddiası ampirik olarak yanlış
-çıktı. Kural pahalı ama vazgeçilmez.
+**Non-negotiable strained:** the "re-run every FAIL yourself" rule was the
+highest-payoff rule in this run — two of three agent findings were confirmed,
+one (permission) was refuted, and an S1 claim carried over from an earlier
+run turned out to be empirically wrong. The rule is expensive but
+indispensable.
 
-**Öneriler:**
+**Proposals:**
 
-- **P1 — "Kontrat şemasını programatik tara" adımı, keşif charter'larının zorunlu
-  bir alt maddesi olmalı.** `SKILL.md` Phase 1 kategori 15'e ve
-  `references/backend-api.md`'ye: bir feature bir alanı/kaydı gizlemekle
-  ilgiliyse, yayınlanan şemadan o alanı taşıyan tüm uçları çıkar ve her birini
-  case'e dönüştür. Elle uç saymak bu sınıfı kaçırıyor.
-- **P1 — Yayınlanan kontrat ile çalışma zamanı yanıtını karşılaştırma kuralı.**
-  Aynı iki referans dosyaya: ilan edilen şema ile gerçek yanıt gövdesinin alan
-  kümesi karşılaştırılmalı; fazla alan (ham entity dönmek) bir bulgudur — yeni
-  kolon eklendiği gün sözleşmeye giriyor.
-- **P2 — "Watch süreci ayaktayken derleme komutu koşma" uyarısı.**
-  `references/backend-api.md` veya ortam manifesti şablonuna: derleme çıktısını
-  paylaşan watch süreçleri, tam derleme koşulduğunda çöker; doğrulama turunda
-  yalnızca test + tip kontrolü koşulur.
-- **P2 — Fixture'ın yazma-yolu ön koşulları kontrol listesi.** `references/test-data.md`:
-  fixture yalnızca okuma case'lerini değil, yazma case'lerinin ön koşullarını da
-  (ücret bakiyesi, kota, izin kaydı) kurmalı; aksi halde ajanlar onları BLOCKED
-  raporlar ve ana oturum aynı işi ikinci kez yapar.
-- **P3 — Global durum gerektiren case'leri paralelleştirmeden muaf tutma.**
-  `SKILL.md` paralelleştirme bölümüne: "sistemde hiç X yok" tipi case'ler ana
-  oturuma saklanır, ajan grubuna verilmez.
+- **P1 — a "scan the contract schema programmatically" step should be a
+  mandatory sub-item of exploratory charters.** Into `SKILL.md` Phase 1
+  category 15 and `references/backend-api.md`: if a feature is about hiding a
+  field/record, extract every endpoint carrying that field from the published
+  schema and turn each into a case. Counting endpoints by hand misses this
+  class.
+- **P1 — a rule comparing the published contract against the runtime
+  response.** Into the same two reference files: the declared schema's field
+  set must be compared against the actual response body's field set; an extra
+  field (returning the raw entity) is a finding — a new column enters the
+  contract the day it's added.
+- **P2 — a "don't run a build command while a watch process is up" warning.**
+  Into `references/backend-api.md` or the environment manifest template: watch
+  processes sharing build output crash when a full build runs; only tests +
+  type checking run during a verification pass.
+- **P2 — a fixture write-path-precondition checklist.** `references/test-data.md`:
+  the fixture must set up not only read cases but write cases' preconditions
+  too (fee balance, quota, permission record); otherwise agents report them
+  BLOCKED and the main session does the same work a second time.
+- **P3 — exempting cases that need global state from parallelisation.** Into
+  `SKILL.md`'s parallelisation section: "there is no X anywhere in the system"
+  type cases stay in the main session, never handed to an agent group.
 
-**Açık öneri (onay bekliyor):** yukarıdaki P1/P1/P2/P2/P3. Bir önceki koşumun
-önerileri de hâlâ onay bekliyor; **tekrar eden desen:** "harness kaynaklı sahte
-FAIL"i azaltan kurallar iki koşumda da P1 çıktı — bu, onaylanmayı hak ettiğinin
-göstergesi. Onaylanırsa MINOR: v1.7.0.
-
----
-
-## 2026-08-27 · L2 · backend API (CQRS, kampanya/ödül alanı)
-
-Öncesinde iki inceleme turu (biri sadeleştirme, biri statik kod incelemesi + düzeltme)
-geçmiş bir değişiklik test edildi. Çıkan dört bulgunun **hiçbirini** o iki tur görmemişti;
-ikisi diff'in tamamen dışından geldi.
-
-**Skill'in yapısı ne yakaladı:**
-- **Kategori 13 (mass assignment probu) tek başına bir S1 buldu:** yetkilendirme URL
-  parametresine göre yapılırken gövdedeki aynı adlı alanın kazanması, yetki kontrolünü
-  baypas eden bir yazma üretiyordu. Feature'ın kendisiyle hiç ilgisi yoktu — katalog satırı
-  zorlamasa test edilmeyecekti.
-- **Kategori 9'un "cross-user paralel" ayrımı** bir S2 buldu: paylaşılan bütçe cap'i aynı
-  kullanıcıda tutuyor, farklı kullanıcılarda tutmuyordu. "Eşzamanlılık" başlığını "aynı
-  kayıt" diye okuyup geçmek bu sınıfı kaçırıyor.
-- **Kategori 19 + ortamın geri kalmışlığı:** hedef ortam migration'ı henüz uygulamamıştı;
-  bu, veri dönüşüm yolunu gerçek veriyle test etmek için tek pencereydi.
-
-**Ne zaman/gürültü üretti:**
-- Ajanlara verdiğim ortam ipuçlarını (listeleme ucunun koordinat gerektirmesi) kendi
-  ölçümümde kullanmadım → bir sahte FAIL. Ajan talimatı ana oturumdan daha bilgiliydi.
-- Tam derleme komutu, ayakta duran watch sürecini öldürdü (bir tur kayıp) — bu zaten
-  önceki koşumun P2 önerisiydi, onaylanmadığı için tekrarladı.
-
-**Doğaçlama ettiklerim (kural olması gerekenler):**
-1. **Bir güvenlik bulgusunun etkisi ilk engelde ölçülmez.** Yetkisiz hedefe yazma denemesi
-   ikincil bir kontrolden (kaynak-sahiplik kontrolü) 400 aldı; orada durmak "etki sınırlı"
-   derdi. O kontrolü baypas eden ikinci bir yol (her tenant'a açık paylaşılan kaynak)
-   denendiğinde bulgu S2'den **S1'e** çıktı. Kural: bir baypas bulgusunda, ilk reddi üreten
-   ikincil kontrolün kendisi de baypas edilmeye çalışılmalı; severity ancak ondan sonra yazılır.
-2. **Veri dönüştüren bir migration, ancak uygulanmadan önce test edilebilir.** Dönüşecek
-   veriyi migration'dan ÖNCE yaratmak gerekir; uygulanmış bir ortamda o yol artık
-   gözlemlenemez ve "migration çalıştı" ifadesi dönüşümü değil yalnızca şema değişimini kanıtlar.
-3. **Ajan talimatına yazılan ortam ipucu, ana oturumun kendi koşumu için de geçerlidir.**
-   Aynı ipucu iki yere yazılmıyorsa ana oturum kendi sahte FAIL'ini üretiyor.
-4. **Bir düzeltmenin kalıcı testi yoksa düzeltme yarımdır.** Controller seviyesindeki bir
-   sıra düzeltmesinin regresyon testi projede yoktu; testi yazıp, düzeltmeyi geçici geri
-   çevirerek kırmızı olduğunu kanıtlamak (yalnız "yeşil" görmek değil) testin gerçekten
-   assert ettiğini gösterdi.
-
-**Non-negotiable gözlemi:** #3 (red-green) bir controller düzeltmesinde zorlandı çünkü
-projede o katmanın test kalıbı yoktu. Kuralı esnetmek yerine kalıbı kurmak doğru çıktı —
-ama skill, "düzeltme katmanının test kalıbı yoksa onu kurmak da düzeltmenin parçasıdır"
-demiyor.
-
-**Öneriler:**
-- **P1 — Baypas bulgularında ikincil kontrolü de test etme kuralı** (yukarıdaki 1).
-  `SKILL.md` Phase 3'e: severity, ilk engelin ardında durmadan, o engeli baypas eden ikinci
-  yol denenerek yazılır.
-- **P1 — Veri dönüştüren migration'ın test penceresi** (yukarıdaki 2). `SKILL.md` kategori 19
-  ve `references/backend-api.md`: dönüşüm case'i migration uygulanmadan önce kurulur; ortam
-  zaten uygulanmışsa bu case `BLOCKED` yazılır, `PASS` değil.
-- **P2 — Ortam ipuçlarının tek kaynağı** (yukarıdaki 3). Ajan talimatına giren her ortam
-  ipucu aynı anda ortam manifestine yazılır; ana oturum kendi case'lerini o manifestten okur.
-- **P2 — Düzeltmenin test kalıbı yoksa kalıbı kurmak düzeltmenin parçasıdır** (yukarıdaki 4).
-  `SKILL.md` Phase 5'e.
-
-**Açık öneri (onay bekliyor):** yukarıdaki P1/P1/P2/P2 + önceki iki koşumun onay bekleyen
-önerileri. **Üçüncü kez tekrar eden desen:** "watch süreci ayaktayken tam derleme koşma"
-uyarısı bu koşumda fiilen zaman kaybettirdi — üç koşumdur P2 olarak duruyor, artık P1
-sayılmalı. Onaylanırsa MINOR: v1.7.0.
+**Open proposal (awaiting approval):** the P1/P1/P2/P2/P3 above. The previous
+run's proposals are also still awaiting approval; **a recurring pattern:**
+rules that reduce "harness-caused fake FAIL" came out P1 in two runs in a
+row — a sign they've earned approval. If approved, MINOR: v1.7.0.
 
 ---
 
-## 2026-09-01 — L3, backend API (ikinci giriş noktası / tool yüzeyi)
+## 2026-08-27 · L2 · backend API (CQRS, campaign/reward area)
 
-- **Case:** 231 · **Sonuç:** 214 PASS / 10 FAIL (6× S2, 7× S3, 5× S4) / 3 açık soru /
-  7 NOT RUN-BLOCKED · **Karar:** NO-GO · **Skill sürümü:** 1.6.0 · **Yürütme:** 7 paralel
-  Sonnet grubu + lider doğrulaması
+A change that had already been through two review rounds (one refactor, one
+static-analysis review + fix) was tested. **Neither** of those two rounds had
+seen any of the four findings that came out of this run; two came from
+entirely outside the diff.
 
-**Genelleştirilmiş dersler:**
+**Caught thanks to structure:**
+- **Category 13 (mass-assignment probe) alone found an S1:** authorization was
+  keyed on a URL parameter, while a same-named field in the body won,
+  producing a write that bypassed the permission check. It had nothing to do
+  with the feature itself — without the catalogue row forcing it, it wouldn't
+  have been tested.
+- **Category 9's "cross-user parallel" distinction** found an S2: a shared
+  budget cap held for the same user but not across different users. Reading
+  "concurrency" as "same record" and moving on misses this class.
+- **Category 19 + the target environment being behind:** the target
+  environment hadn't applied the migration yet; this was the only window to
+  test the data-transformation path against real data.
 
-- **Katalog satırı 15 (hata tahmini / keşif) koşunun en ciddi üç bulgusunu tek başına üretti**
-  (6 case → 3 FAIL, hepsi S2). Matrisin üretebildiği kategoriler yüzeyin sözleşmesini doğruladı;
-  sözleşmenin *kendi içinde tutarsız* olduğu yerleri yalnızca timeboxed keşif buldu. Satır 15'in
-  "always" işaretini hak ettiğinin en net kanıtı.
-- **Bir okuma yolunda güvenli olan bir sınır/guard, yazma yolunda ters etki yapar.** Yanıtı
-  reddetmek okumada "eksik cevap verme" demektir; yazmada "yan etki gerçekleşti ama olmadı denildi"
-  üretir — çağıran tekrar dener ve yinelenen kayıt oluşur. Koşunun en ciddi bulgusu buydu ve hiçbir
-  kategori satırı bunu doğrudan sormuyor.
-- **Bir feature mevcut mantığa ikinci bir giriş noktası eklediğinde, iki giriş noktasının BEYAN
-  ETTİĞİ korumaları kaynak seviyesinde diff'lemek gerekiyor.** Siyah kutu testi "reddedildi mi"
-  sorusunu cevaplar, "doğru koruma mı seçildi" sorusunu cevaplamaz. Bu diff bir yetki yükseltme
-  bulgusu (S2) üretti: bir gövde alanı, kendisi için ayrı bir izin tanımlanmış bir lifecycle
-  geçişini daha zayıf bir izinle tetikliyordu.
-- **Aynı veri sınıfı için iki maskeleme/koruma yüzeyi varsa, biri eksiktir.** İki yüzeyin
-  uyuşmazlığı bulgunun kendisi olur ve tartışmayı bitirir: "kasıtlı mı" sorusuna, projenin aynı
-  değeri başka yerde maskelemesi cevap verir.
-- **Aynı sınıftaki iki girdi farklı zamanlarda doğrulanıyorsa, geç doğrulanan sessizce üretime
-  kaçar.** Bir tür referans create anında reddedilirken kardeşi yalnızca çalışma anında
-  başarısız oluyordu — ve dry-run doğrulama aracı ikincisine temiz rapor veriyordu.
-- **Paralel yürütmede fixture izolasyonu VERİYLE SINIRLI KALMAMALI: kimlik ve yetki nesneleri de
-  izole olmalı.** İki grup aynı yetki grubunu mutasyona uğratacak şekilde görevlendirilmişti; koşu
-  ortasında düzeltme mesajı göndermek gerekti. Sahte FAIL riski en pahalı olduğu kategoride
-  (güvenlik/yetki) doğuyor.
-- **Yürütücülere verilen brief'te adı geçen her ortak artefakt, dispatch'ten ÖNCE gerçekten
-  yazıyor mu diye kontrol edilmeli.** Brief'te "her çağrı şu dosyaya birikir" denen dosyaya
-  harness hiç yazmıyordu; bir ajan profili elle yeniden kurmak için ciddi efor harcadı.
-- **Ortak, case-id başına otomatik kanıt arşivleyen bir harness'i dispatch'ten önce kurmak,
-  "her case için ham kanıt" kuralını disiplin meselesinden bedava bir yan etkiye çevirdi.** 7 grup
-  boyunca tek bir "kanıt yok" durumu çıkmadı.
-- **Kendi vaka listem 3 sahte FAIL üretti:** yanlış bir sabit değer beklentisi, var olmayan bir
-  şema kolonunun varsayılması, ve kurulum adımının hatasını yutan bir script. Üçü de Phase 3'te
-  öldü — ama üçü de vaka tasarımı sırasında, tek bir "beklentiyi nereden aldım" sorusuyla
-  önlenebilirdi.
-- **Eksik bir özelliği hata olarak raporlama baskısı gerçek:** hiçbir yerde vaat edilmemiş bir
-  tekillik kuralının yokluğu, bir yürütücü tarafından "dokümanla çelişiyor" diye raporlandı.
-  "Dayanak yoksa bulgu değil, açık sorudur" kuralı bunu tuttu.
+**Where it cost time/noise:**
+- I didn't feed my own environment hints (the listing endpoint requiring
+  coordinates) into my own measurement → a fake FAIL. The agent instructions
+  were better informed than the main session.
+- The full build command killed a running watch process (one round lost) —
+  this was already the previous run's P2 proposal, and it recurred because
+  that proposal wasn't approved.
 
-**Öneriler:**
+**Things I improvised that should be rules:**
+1. **A security finding's impact isn't measured at the first barrier.** The
+   write attempt against an unauthorized target got a 400 from a secondary
+   control (resource-ownership check); stopping there would have said "limited
+   impact". When a second path that bypassed that control (a resource shared
+   across every tenant) was tried, the finding rose from S2 to **S1**. Rule:
+   for a bypass finding, the secondary control that produced the first
+   rejection must itself be attacked before severity is assigned.
+2. **A data-transforming migration can only be tested before it's applied.**
+   The data to be transformed must be created BEFORE the migration; in an
+   environment where it's already applied, that path can no longer be
+   observed, and "the migration ran" proves only the schema change, not the
+   transformation.
+3. **An environment hint written into the agent instructions applies to the
+   main session's own run too.** If the same hint isn't written in both
+   places, the main session produces its own fake FAIL.
+4. **A fix without a regression test is an incomplete fix.** A controller-level
+   ordering fix had no regression test in the project; writing the test and
+   temporarily reverting the fix to prove it went red (not just seeing
+   "green") showed the test was actually asserting something.
 
-- **P1 — Fixture izolasyon kuralını kimlik/yetki nesnelerine genişlet.** SKILL.md'nin paralel
-  yürütme bölümündeki "her ajan kendi izole fixture setini seed eder" maddesi yalnız veriden
-  bahsediyor. Kimlik, rol, izin grubu, API anahtarı gibi *yetkilendirme* nesneleri de aynı kurala
-  girmeli; aksi halde iki grup birbirinin izin durumunu değiştirir ve sahte FAIL tam olarak
-  güvenlik kategorisinde çıkar. (Bu koşuda koşu ortasında düzeltme gerekti.)
-- **P1 — `references/oracles.md`'ye yeni bir sezgi: "ikinci giriş noktası diff'i".** Bir feature
-  mevcut mantığa ikinci bir giriş noktası (tool yüzeyi, kuyruk tüketicisi, batch iş, admin CLI)
-  eklediğinde, o giriş noktasının beyan ettiği korumaları birincinin beyanlarıyla kaynak seviyesinde
-  karşılaştır. Siyah kutu "reddedildi mi"yi görür, "doğru koruma mı"yı görmez. Bu koşuda S2 üretti.
-- **P2 — `references/oracles.md`'ye: "okuma yolunda doğrulanmış bir sınır, yazma yolunda yeniden
-  test edilmeli".** Guard/limit/kesme davranışları yan etkinin öncesinde mi sonrasında mı çalıştığı
-  sorusuyla birlikte test edilmeli; yan etkiden sonra reddetmek "sessizce tamamlandı ama başarısız
-  raporlandı" üretir. Bu koşunun en ciddi bulgusu.
-- **P2 — Phase 2'ye bir satır: paralel dispatch'ten önce ortak harness'i ve brief'te adı geçen her
-  ortak artefaktı bir çağrıyla doğrula.** İsmi geçen ama yazmayan bir dosya, ajan başına ölçülebilir
-  efor kaybı demek.
-- **P3 — Rapor şablonuna "paylaşılan durumu mutasyona uğrattığı için koşulmayan süitler" için
-  adlandırılmış bir bölüm.** Bu koşuda §6 olarak doğaçlandı; `BLOCKED (ortam)` ile aynı şey değil
-  (ortam eksik değil, koşmak *başka* şeyi bozacaktı) ve devredilen borç listesine farklı bir
-  gerekçeyle giriyor.
+**Non-negotiable observation:** #3 (red-green) was strained on a controller
+fix because the project had no test pattern for that layer. Establishing the
+pattern instead of bending the rule turned out to be the right call — but the
+skill doesn't say "if the fix's layer has no test pattern, establishing one is
+part of the fix."
 
-### Aynı koşunun düzeltme fazı (aynı gün, 18 düzeltme)
+**Proposals:**
+- **P1 — a rule to also test the secondary control on bypass findings** (item
+  1 above). Into `SKILL.md` Phase 3: severity is assigned only after a second
+  path bypassing that barrier is attempted, not by stopping behind the first
+  barrier.
+- **P1 — a test window for data-transforming migrations** (item 2 above).
+  `SKILL.md` category 19 and `references/backend-api.md`: a transformation
+  case is set up before the migration is applied; if the environment has
+  already applied it, that case is written as `BLOCKED`, not `PASS`.
+- **P2 — a single source for environment hints** (item 3 above). Every
+  environment hint entered into an agent instruction is written to the
+  environment manifest at the same time; the main session reads its own cases
+  from that manifest.
+- **P2 — if the fix's layer has no test pattern, establishing one is part of
+  the fix** (item 4 above). Into `SKILL.md` Phase 5.
 
-- **Bir düzeltmeyi yalnız unit testle doğrulamak, düzeltmenin hiç çalışmadığını gizleyebilir.** Bir
-  düzeltme, aynı verinin iki farklı CLR şeklinde geldiği bir yolda no-op çıktı (bellekte kurulan
-  değer vs. serileştirmeden dönen değer); düzeltilen iki yüzeyde hiç çalışmıyordu ama üçüncü yüzeyde
-  çalıştığı için tüm unit testler yeşildi. **Sadece bulguyu üreten canlı probun tekrar koşulması
-  yakaladı.** Kural: her düzeltme, bulguyu üreten prob ile — testle değil — kapatılmalı.
-- **Düzeltme fazının kendi doğrulama koşusu da yanlış alarm üretir, ve oranı yüksektir.** Bu fazda 4
-  "FAIL"ın 3'ü benim assertion hatamdı (unicode-escape'li JSON'da düz string arama, `psql`'in
-  boolean'ı `f` değil `false` yazması, eşiğe ulaşmayan test verisi). Ham çıktıyı yazdırmak üçünü de
-  dakikalar içinde ayırdı; paraphrase etseydim üçü de bulgu olarak raporlanabilirdi.
-- **Mevcut testlerin düzeltme sonrası kırılması en temiz kırmızı-yeşil kanıtıdır.** Üç düzeltmede
-  eski davranışı pinleyen testler kırıldı (biri test ADINDA eski beklentiyi taşıyordu). Bunları
-  "yeni sözleşmeye güncellemek" assertion zayıflatmak değildir — ama ayrımı raporda açıkça yazmak
-  gerekiyor, yoksa okuyucu ikisini ayırt edemez.
-- **Bir subagent, brief'te yasaklanmadığı için yıkıcı bir git komutu çalıştırdı** (`git checkout --
-  <file>`, staged olmayan değişiklikleri atan). Bu koşuda veri kaybı olmadı — koşu başındaki durum ve
-  o anki diff birlikte bunu kanıtladı — ama kanıtlamak zorunda kalmak, brief'in eksik olduğunun
-  kanıtı.
-
-**Ek öneriler:**
-
-- **P1 — Yürütücü/uygulayıcı subagent brief'ine yıkıcı komut yasağı eklenmeli.** `git checkout --`,
-  `git reset`, `git stash`, `git clean`, dosya silme: hiçbiri onay alınmadan çalıştırılmamalı, ve
-  "kendi geçici değişikliğimi geri alıyorum" bir istisna değildir (paylaşılan bir dosyada başkasının
-  kaydedilmemiş değişikliğini de alır). SKILL.md'nin subagent bölümünde tek satır.
-- **P1 — "Düzeltmeyi bulgunun kendi probuyla kapat" kuralı Phase 5'e girmeli.** Şu an Phase 5
-  "regresyon testi ekle + yeniden koş" diyor; testin *doğru şeyi* koştuğunun garantisi yok. Bulguyu
-  üreten prob, testin yerine değil, testin yanında koşulmalı.
-- **P2 — Rapor şablonu, "mevcut bir testin düzeltme sonrası kırılıp yeni sözleşmeye güncellenmesi"
-  ile "yeni yazılmış test" arasını ayırmalı.** İlki kırmızı-yeşil kanıtıdır ve en değerli satırdır;
-  aynı listede görünmeleri o kanıtı görünmez yapıyor.
-
+**Open proposal (awaiting approval):** the P1/P1/P2/P2 above + the previous
+two runs' still-pending proposals. **A pattern recurring for the third time:**
+the "don't run a full build while a watch process is up" warning actually cost
+time in this run — it has stood as P2 for three runs now and should count as
+P1. If approved, MINOR: v1.7.0.
 
 ---
 
-## 2026-09-07 · L3 · tarayıcı içi LLM istemcisi + web frontend (düzeltme modu açık)
+## 2026-09-01 — L3, backend API (second entry point / tool surface)
 
-**Yakalananlar (yapı sayesinde):**
+- **Cases:** 231 · **Result:** 214 PASS / 10 FAIL (6× S2, 7× S3, 5× S4) / 3 open
+  questions / 7 NOT RUN-BLOCKED · **Verdict:** NO-GO · **Skill version:** 1.6.0 ·
+  **Execution:** 7 parallel Sonnet groups + lead verification
 
-- **Kategori katalogunun "yerelleştirme/uç veri" satırı,** özellik listesinde hiç geçmeyen bir
-  belge-dili hatası buldu: belge dili UI dilini takip etmediği için CSS `uppercase` yanlış dilin
-  büyük harf kurallarını uyguluyordu ve dilin en sık harflerinden biri bozuk basılıyordu. Hiçbir
-  fonksiyonel senaryo buna bakmaz; satır olduğu için bakıldı.
-- **"Basis'i kaynak koddaki niyet yorumlarından da oku" yaklaşımı** iki S2'yi doğrudan üretti. Bu
-  kod tabanında niyet yorumlarda açıkça yazılı olduğu için karşılaştırma yapılabildi: yorumun
-  vaat ettiği ile kodun yaptığı arasındaki fark, dokümansız bir projede görünmez olurdu.
-- **"Beklenmeyen FAIL kümesinde önce kendi harness'ından şüphe et"** kuralı üç kez ateşlendi ve
-  üçünde de haklıydı (maskeleme regex'i kendi kontrol alanını gizledi; yerinde mutate edilen bir
-  dizi assertion'ı bozdu; paylaşılan bir test yardımcısı prop'u yutuyordu). Üçü de rapora hiç
-  girmedi.
+**Generalised lessons:**
 
-**Maliyet/gürültü:**
+- **Catalogue row 15 (error guessing / exploratory) alone produced the run's
+  three most serious findings** (6 cases → 3 FAILs, all S2). The categories the
+  matrix could produce verified the surface's contract; only timeboxed
+  exploration found where the contract was *internally inconsistent*. The
+  clearest evidence yet that row 15 deserves its "always" mark.
+- **A boundary/guard that is safe on a read path backfires on a write path.**
+  Rejecting the response means "gave an incomplete answer" on read; on write it
+  produces "the side effect happened but was reported as not having happened"
+  — the caller retries and a duplicate record is created. This was the run's
+  most serious finding, and no catalogue row asks this directly.
+- **When a feature adds a second entry point to existing logic, the protections
+  the two entry points DECLARE must be diffed at the source level.** Black-box
+  testing answers "was it rejected", not "was the right protection chosen".
+  This diff produced a privilege-escalation finding (S2): a body field was
+  triggering a lifecycle transition that had its own separately defined
+  permission, using a weaker permission instead.
+- **If two masking/protection surfaces exist for the same data class, one of
+  them is missing something.** A disagreement between the two surfaces is the
+  finding itself and ends the debate: the "is this intentional" question is
+  answered by the project masking the same value elsewhere.
+- **If two inputs of the same class are validated at different times, the one
+  validated later silently escapes into production.** One type reference was
+  rejected at create time while its sibling only failed at execution time — and
+  the dry-run validation tool reported clean for the second one.
+- **Fixture isolation in parallel execution must NOT be limited to data:
+  identity and authorization objects must be isolated too.** Two groups had
+  been assigned in a way that mutated the same permission group; a mid-run
+  correction message had to be sent. The fake-FAIL risk arises exactly in the
+  category (security/permissions) where it's most expensive.
+- **Every shared artifact named in a brief given to executors must be verified
+  as actually being written BEFORE dispatch.** A file the brief said "every
+  call accumulates into this file" was never written to by the harness at all;
+  one agent spent significant effort manually rebuilding a profile.
+- **Setting up a shared harness that automatically archives evidence per
+  case-id before dispatch turned the "raw evidence for every case" rule from a
+  discipline into a free side effect.** Across 7 groups, not a single "no
+  evidence" situation came up.
+- **My own case list produced 3 fake FAILs:** a wrong constant-value
+  expectation, an assumption of a schema column that didn't exist, and a script
+  that swallowed a setup step's error. All three died in Phase 3 — but all
+  three could have been prevented during case design with a single "where did
+  I get this expectation from" question.
+- **The pressure to report a missing feature as a bug is real:** the absence of
+  a uniqueness rule that was never promised anywhere was reported by one
+  executor as "contradicts the docs". The "no basis, no finding — it's an open
+  question" rule held the line.
 
-- **Seviye tablosu, "yürütmesi para yakan sistem" durumunu hiç hesaba katmıyor.** Burada her
-  senaryo gerçek bir ücretli model çağrısıydı. Case listesi yürütme maliyetine göre sınıflandırıldı
-  (deterministik / arayüz / ücretli) ve derinlik ucuz olan yere kaydırıldı — bu doğaçlamaydı, kural
-  değil.
-- **Aynı koşuda "hepsini düzelt" modu, kapsamı sessizce takas etti.** 12 bulgunun 11'i kapandı ama
-  tasarlanan 122 case'in 57'si hiç koşulmadı; eşzamanlılık, dayanıklılık ve keşif charter'larının
-  **tamamı** koşulmayanlar arasında. Seviye tablosu L3 için "60-120 case koşulur" diyor; bu koşu o
-  vaadi tuttuğu izlenimi veriyor ama tutmuyor.
+**Proposals:**
 
-**Doğaçlananlar (kural olmalı):**
+- **P1 — extend the fixture isolation rule to identity/authorization objects.**
+  SKILL.md's parallel-execution section's "each agent seeds its own isolated
+  fixture set" item talks about data only. Authorization objects — identity,
+  role, permission group, API key — need the same rule; otherwise two groups
+  mutate each other's permission state and the fake FAIL lands exactly in the
+  security category. (A mid-run correction was needed in this run.)
+- **P1 — a new heuristic in `references/oracles.md`: "second entry point
+  diff".** When a feature adds a second entry point (tool surface, queue
+  consumer, batch job, admin CLI) to existing logic, compare that entry
+  point's declared protections against the first's declarations at the source
+  level. Black box sees "was it rejected", not "was it the right protection".
+  This produced an S2 in this run.
+- **P2 — into `references/oracles.md`: "a boundary validated on the read path
+  must be re-tested on the write path".** Guard/limit/cutoff behaviours must be
+  tested together with the question of whether they run before or after the
+  side effect; rejecting after the side effect produces "silently completed but
+  reported as failed". This run's most serious finding.
+- **P2 — a line in Phase 2: verify the shared harness and every shared artifact
+  named in the brief with one call before parallel dispatch.** A file that's
+  named but never written means measurable wasted effort per agent.
+- **P3 — a named section in the report template for "suites not run because
+  they'd mutate shared state".** Improvised as §6 in this run; not the same
+  thing as `BLOCKED (environment)` (the environment isn't missing, running it
+  would break *something else*) and it belongs on the carried-forward debt
+  list for a different reason.
 
-- Bağımlılığın **ilan ettiği** yetenekler ile istemcinin **tükettiği** yetenekler arasında kaynak
-  seviyesinde fark alma. Bu koşunun en ciddi bulgusu buradan çıktı ve siyah kutuya tamamen
-  görünmezdi: hiçbir şey hata vermiyordu, sistem yalnızca sessizce kötü çalışıyordu.
-- Değiştirilen bir varsayılan/fabrika fonksiyonu için, **o fabrikayı mock'layan testleri** ara.
-  Tam olarak onlar yeşil kalacak testlerdir.
+### Same run's fix phase (same day, 18 fixes)
 
-**Zorlanan non-negotiable:**
+- **Verifying a fix with only a unit test can hide that the fix never worked at
+  all.** A fix turned out to be a no-op on a path where the same data arrived
+  in two different CLR shapes (a value set in memory vs. a value returned from
+  deserialization); it never worked on the two fixed surfaces but did on a
+  third, so all unit tests were green. **Only re-running the live probe that
+  produced the finding caught it.** Rule: every fix must be closed with the
+  probe that produced the finding — not with a test.
+- **The fix phase's own verification run also produces false alarms, and at a
+  high rate.** In this phase, 3 of 4 "FAILs" were my own assertion mistakes
+  (searching for a plain string inside unicode-escaped JSON, `psql` printing a
+  boolean as `f` instead of `false`, test data that didn't reach the
+  threshold). Printing the raw output separated all three within minutes; had
+  I paraphrased, all three could have been reported as findings.
+- **Existing tests breaking after a fix is the cleanest red-green evidence.**
+  Three fixes broke tests that had pinned the old behaviour (one carried the
+  old expectation in the test NAME itself). "Updating them to the new
+  contract" is not weakening the assertion — but the distinction needs to be
+  written explicitly in the report, or the reader can't tell the two apart.
+- **A subagent ran a destructive git command because the brief hadn't
+  forbidden it** (`git checkout -- <file>`, discarding unstaged changes). No
+  data was lost in this run — the state at the start of the run and the diff
+  at that moment together proved it — but having to prove it is itself
+  evidence the brief was incomplete.
 
-- **#4 (mevcut davranışı değil niyeti test et)** iki yerde zorlandı ve ikisi farklı sebepten:
-  (a) mevcut bir test hatalı davranışı bilinçli olarak pinlemişti (yorumu bunu açıkça yazıyordu);
-  (b) yazılı basis'in kendisi, sonradan gelen bir kullanıcı kararıyla geçersiz kılınmıştı ve dosya
-  bunu bilmiyordu. İkincisi kuralda hiç ele alınmamış bir durum.
+**Additional proposals:**
 
-**Öneriler:**
-
-- **P1 — "Basis bayat olabilir" kuralı, `references/oracles.md` ve Phase 0'a.** Yazılı bir basis
-  (plan, spec, tasarım kararı) projedeki **sonraki** bir talimatla geçersiz kılınmış olabilir. Basis
-  bir artefakt ise, onu geçersiz kılan daha yeni bir karar var mı diye kontrol et; varsa en yeni
-  karar geçerlidir ve bulgu **koda değil dokümana** yazılır ("plan bu noktada bayat"). Aksi halde
-  doğru kod, güvenle FAIL raporlanır. SKILL.md Phase 0 zaten "basis'in kendisi kusurlu olabilir"
-  diyor ama yalnız *çelişki/eksiklik* için; *sonradan geçersiz kılınma* farklı bir durum ve daha
-  sinsi.
-- **P1 — `references/oracles.md`'ye yeni sezgi: "ilan edilen yetenek / tüketilen yetenek diff'i".**
-  Sistem, yeteneklerini ilan eden bir bağımlılıkla konuşuyorsa (protokol yetenekleri, şema
-  ipuçları, annotation'lar, olay tipleri, sayfalama meta'sı, cache başlıkları), ilan edilenlerin
-  hangilerinin kodda **tüketildiğini** kaynak seviyesinde karşılaştır. Tüketilmeyen bir ilan hata
-  vermez; sistem yalnızca sessizce kötü çalışır — ve bağımlılığın dokümanı istemciyi o yola
-  yönlendiriyorsa, tüketici o talimatı izleyemez.
-- **P2 — Seviye tablosuna yürütme maliyeti boyutu.** Kickoff'ta, yürütmesi para yakan (ücretli API,
-  gerçek dış çağrı, uzun süren iş) senaryolar için case'leri maliyet sınıfına ayır ve derinliği
-  ucuz sınıfa kaydır. Rapor, koşulan case'lerin maliyet dağılımını da yazsın — yoksa "L3 koştum"
-  ifadesi maliyeti çok farklı iki koşu için aynı şeyi ifade ediyor.
-- **P2 — "L3 + düzeltme modu" için açık bir uyarı.** İkisi aynı koşuda seçildiğinde, kickoff'ta
-  kapsamın takas edileceği **söylenmeli** ("keşif mi kapanış mı önce?") ya da koşu ikiye
-  bölünmeli. Şu anki metin bu kombinasyonun kapsam üzerindeki etkisini hiç anmıyor.
-- **P3 — Değişen bir varsayılan/fabrika için "o fabrikayı mock'layan testleri ara" satırı,**
-  Phase 0'ın mevcut testleri okuma maddesine. Bu koşuda gerçek bir kör nokta buldu: 35 test
-  fabrikayı mock'layıp değişen alanı enjekte ediyordu, dolayısıyla değişikliğin kırdığı hiçbir şey
-  görünmeyecekti.
+- **P1 — a destructive-command ban must be added to executor/implementer
+  subagent briefs.** `git checkout --`, `git reset`, `git stash`, `git clean`,
+  file deletion: none may run without approval, and "reverting my own
+  temporary change" is not an exception (it also reverts someone else's
+  unsaved change in a shared file). One line in SKILL.md's subagent section.
+- **P1 — the "close the fix with the finding's own probe" rule must enter
+  Phase 5.** Phase 5 currently says "add a regression test + re-run"; there's
+  no guarantee the test runs the *right* thing. The probe that produced the
+  finding must run alongside the test, not in place of it.
+- **P2 — the report template must distinguish "an existing test broken by the
+  fix and updated to the new contract" from "a newly written test".** The
+  former is red-green evidence and the most valuable line in the report;
+  appearing in the same list as the latter makes that evidence invisible.
 
 
 ---
 
-## 2026-09-16 · L3 · backend API, çok kiracılı yetki sınırı (rapor-only; koşumu yapan = değişikliği yazan)
+## 2026-09-07 · L3 · in-browser LLM client + web frontend (fix mode on)
 
-**Case:** 138 · **Sonuç:** 122 PASS / 3 FAIL / 13 BLOCKED · **Karar:** GO WITH RISK
-(değişikliğe atfedilebilen 0 bulgu; açık 2×S2 önceden var) · **Skill sürümü:** 1.7.0
+**Caught thanks to structure:**
 
-**Yakalananlar (yapı sayesinde):**
+- **The category catalogue's "localisation/edge data" row** found a
+  doc-language bug that never appeared in the feature list: because the doc
+  language didn't follow the UI language, CSS `uppercase` applied the wrong
+  language's uppercasing rules, and one of that language's most frequent
+  letters printed corrupted. No functional scenario looks at this; it was
+  looked at because the row exists.
+- **The "read the basis from source-code intent comments too" approach**
+  directly produced two S2s. In this codebase the comparison was possible
+  because intent was written explicitly in comments: the gap between what the
+  comment promised and what the code did would be invisible in an undocumented
+  project.
+- **"Suspect your own harness first on an unexpected FAIL cluster"** fired
+  three times and was right all three (a masking regex hid its own control
+  scope; an in-place-mutated array broke an assertion; a shared test helper
+  was swallowing a prop). None of the three ever reached the report.
 
-- **Kategori 6 (kombinasyonlar)** karar tablosu olarak kurulunca "yüzey × enjeksiyon
-  noktası × kiracı ilişkisi" matrisi çıktı ve taramayı 2–3 uçtan 14 yüzeye taşıdı.
-  Doğaçlama bir koşu bunların ilk üçünde durur.
-- **Non-negotiable #8 (kiracı izolasyonu bir kategori değil, ayakta duran bir iddia)**
-  iddianın şeklini değiştirdi: "403 mü döndü" yerine "kayıt hangi kiracıya düştü".
-  Bu yeniden çerçeveleme, koşumun en ağır bulgusunu (ödeme, başka kiracının alt
-  kaydına bağlanabiliyor) doğrudan üretti — ve bu arada 403 bekleyen bir iddianın
-  düzeltme geri alınsa bile geçmeye devam edeceğini de gösterdi.
-- **Kategori 4 + tutarlılık oracle'ı** kardeş uçların aynı sınır değerinde farklı
-  davrandığını yakaladı (biri 400, diğeri 500). Keşifle bulunmaz.
-- **Basis'i tersten okuma** kuralı, silinmiş bir alanın hiçbir case tarafından
-  kapsanmadığını gösterdi; açık koşum içinde kapatıldı.
+**Cost/noise:**
 
-**Maliyet/gürültü:**
+- **The level table doesn't account for the "execution burns money" case at
+  all.** Here every scenario was a real paid model call. The case list was
+  classified by execution cost (deterministic / interface / paid) and depth
+  was shifted toward the cheap bucket — this was improvised, not a rule.
+- **The "fix everything" mode in the same run silently traded off scope.** 11
+  of 12 findings were closed, but 57 of the 122 designed cases never ran,
+  including **all** of the concurrency, resilience, and exploratory charters.
+  The level table says "60-120 cases run" for L3; this run gives the
+  impression it kept that promise, but it didn't.
 
-- Bir yürütücü ajan, gerçek bir dış sağlayıcı çağrısı yapmaktan çekinip case'i
-  NOT RUN bıraktı; sağlayıcı aslında erişilebilir ve güvenliydi, case iki çağrıda
-  tamamlandı. Ortam manifesti bağımlılığın *var olup olmadığını* yazıyor,
-  *çağrılmasının güvenli olup olmadığını* yazmıyor.
-- İki sahte FAIL, ikisi de aynı sebepten: enum'ın tanımlayıcı adı wire değeri
-  sanılarak kullanıldı. Mevcut "sentetik değer geçerli olmalı" kuralı format
-  kontrolünden bahsediyor; bu hata format kontrolünü geçiyor çünkü şekil doğru.
-- 138 case'in 13'ü BLOCKED ve neredeyse tamamı **veri** eksikliği. Ortam envanteri
-  bağımlılıkları kapsıyor, fixture'ları kapsamıyordu; hepsi koşum ortasında
-  keşfedildi.
+**Things I improvised that should be rules:**
 
-**Doğaçlananlar (kural olmalı):**
+- Diffing, at the source level, between the capabilities a dependency
+  **declares** and the capabilities the client **consumes**. This run's most
+  serious finding came from exactly this, and it was completely invisible to
+  black-box testing: nothing errored, the system just silently misbehaved.
+- For a changed default/factory function, search for **tests that mock that
+  factory**. Those are exactly the tests that will stay green.
 
-- **A/B diferansiyel koşum.** Değişiklik öncesi build'i aynı veri deposuna karşı
-  yan yana ayağa kaldırmak ve her bulguyu iki tarafta da koşmak. Koşumun tek en
-  değerli hamlesiydi: "sekiz bulgunun sekizi de önceden var" cümlesi iddia değil
-  ölçüm oldu, dokunulmaması gereken yüzeyler bayt bayt karşılaştırılabildi ve
-  düzeltmenin kırmızı-yeşili ayrı bir test yazmadan çıktı.
-- **Temelin geçerliliğini önce kanıtlama.** Eski sürecin başlangıç zamanının ilk
-  edit'ten önce olduğu gösterilmeden hiçbir A/B sonucuna güvenilmedi. Bu adım
-  olmadan teknik kendi sonucunun tersini kanıtlayabilir.
+**Non-negotiable strained:**
 
-**Zorlanan non-negotiable:**
+- **#4 (test intent, not existing behaviour)** was strained in two places for
+  two different reasons: (a) an existing test had deliberately pinned the
+  wrong behaviour (its comment said so explicitly); (b) the written basis
+  itself had been superseded by a later user decision, and the file didn't
+  know it. The second is a case the rule never addressed at all.
 
-- **#6 (kendini sertifikalandırma yasağı)**, kuralın adını koymadığı bir yerden
-  zorlandı: değişikliği yazan kişi case listesini de tasarladı. Kural yürütme
-  bağımsızlığını istiyor, tasarım bağımsızlığını istemiyor. Kendi yazdığı yeni
-  kodun sınır değer tutarsızlığını, listeyi tasarlayan değil, aynı uçları kardeş
-  bir uçla karşılaştıran bağımsız bir ajan buldu.
-- **Karar kuralı gerçeklikle çarpıştı:** "kritik akışta açık S2 → NO-GO", önceden
-  var olan bir S2 yüzünden, kanıtlanmış bir S1'i kapatan düzeltmeyi bloke
-  ediyordu. Kural kimin bulgusu olduğunu sormuyor.
+**Proposals:**
 
-**Öneriler:**
+- **P1 — a "the basis can be stale" rule, into `references/oracles.md` and
+  Phase 0.** A written basis (plan, spec, design decision) can have been
+  superseded by a **later** instruction in the project. If the basis is an
+  artifact, check whether a newer decision supersedes it; if so, the newest
+  decision governs and the finding is written **against the doc, not the
+  code** ("the plan is stale at this point"). Otherwise correct code gets
+  confidently reported as FAIL. SKILL.md Phase 0 already says "the basis
+  itself can be defective", but only for *contradiction/gaps*; being
+  *superseded later* is a different, sneakier case.
+- **P1 — a new heuristic in `references/oracles.md`: "declared capability /
+  consumed capability diff".** When a system talks to a dependency that
+  declares its capabilities (protocol capabilities, schema hints,
+  annotations, event types, pagination metadata, cache headers), compare at
+  the source level which of the declared ones are actually **consumed** in
+  code. An unconsumed declaration doesn't error; the system just silently
+  misbehaves — and if the dependency's docs point the client toward that path,
+  the consumer can't follow the instruction. This run produced an S2 this way.
+- **P2 — an execution-cost dimension on the level table.** At kickoff, split
+  cases into a cost class for scenarios whose execution burns money (paid
+  API, real external call, long-running job), and shift depth toward the
+  cheap class. The report should also state the cost distribution of the
+  cases it ran — otherwise "I ran L3" means the same thing for two runs with
+  wildly different costs.
+- **P2 — an explicit warning for "L3 + fix mode".** When both are chosen for
+  the same run, kickoff must **say** that scope will be traded off
+  ("exploration first, or closing findings first?") or the run should be
+  split in two. The current text never mentions this combination's effect on
+  scope.
+- **P3 — a "search for tests mocking that factory" line for a changed
+  default/factory,** into Phase 0's existing-tests-reading item. This run
+  found a real blind spot: 35 tests mocked the factory and injected the
+  changed field, so nothing the change broke would have been visible.
 
-- P1 — diferansiyel (A/B) yürütme tekniği + temel geçerlilik kanıtı → UYGULANDI (v1.8.0)
-- P1 — karar kurallarına atıf boyutu → UYGULANDI (v1.8.0)
-- P2 — Phase 0 fixture envanteri → UYGULANDI (v1.8.0)
-- P2 — non-negotiable #6'ya tasarım bağımsızlığı → UYGULANDI (v1.8.0)
-- P3 — sentetik değer kuralına "değeri oku, ismi değil" → UYGULANDI (v1.8.0)
-- **P3 — AÇIK:** ortam manifestinin bağımlılık tablosuna "çağrılması güvenli mi"
-  sütunu. Şu an yalnızca *gerçek / mock / yok* yazıyor; yürütücü ajan bir dış
-  çağrının geri döndürülemez maliyeti olup olmadığını bilmediği için temkinli
-  davranıp case'i koşmuyor. Sonraki koşumda tekrarlarsa P2'ye yükselir.
 
 ---
 
-## 2026-09-22 · L3 · backend API / servis katmanı (eşzamanlılık + kilit/izolasyon düzeltmesi; rapor-only, sonra 3 düzeltme)
+## 2026-09-16 · L3 · backend API, multi-tenant permission boundary (report-only; the person running the QA = the person who wrote the change)
 
-**Case:** 41 · **Sonuç:** 33 PASS / 2 FAIL / 6 BLOCKED · **Karar:** GO
-(değişikliğe atfedilebilen 0 bulgu; 2 bulgu ölçümle önceden var) ·
-**Skill sürümü:** 1.8.0
+**Cases:** 138 · **Result:** 122 PASS / 3 FAIL / 13 BLOCKED · **Verdict:** GO WITH RISK
+(0 findings attributable to the change; 2×S2 pre-existing and open) · **Skill version:** 1.7.0
 
-**Yakalananlar (yapı sayesinde):**
+**Caught thanks to structure:**
 
-- **A/B diferansiyel koşum (§11), bu kez atıf için değil geçerlilik için.**
-  Değişiklik öncesi build aynı veri deposuna karşı koşulunca tek bir satırda hem
-  hatanın gerçekliği hem de harness'ın onu görebildiği kanıtlandı: eski kod
-  cap'in dört katını hiç ret vermeden dağıttı, yeni kod tam cap'te durdu. Bu
-  ölçüm olmadan yeni build'in yeşili ile "paralellik hiç çakışmadı" ayırt
-  edilemezdi.
-- **Kategori 9'u gerçek bağımlılığa karşı koşma zorunluluğu.** Projenin mevcut
-  süiti tamamen yeşildi ve değişikliğin ana iddiası hakkında sıfır bilgi
-  taşıyordu — mock'lu bir Prisma kilit de görmez, izolasyon seviyesi de. Koşumun
-  bütün gerçek bulguları, elde kurulan gerçek-servis/gerçek-veritabanı
-  harness'ından çıktı.
-- **Bulguyu koşuma ait olup olmadığına göre ayırma** iki hassasiyet bulgusunun da
-  önceden var olduğunu gösterdi; biri (cap'e bağlı olan yarısı) yine de bu
-  değişikliğin hesabına yazıldı çünkü düzeltmenin kırptığı rakam tam o yoldan
-  geçiyordu. İkisini tek bulgu olarak raporlamak, kapsam dışı olan yarısını da
-  düzeltme baskısına sokardı.
-- **Kendi verdiği karara bir kez karşı çıkma (#7)**, bağımsız bir tasarım
-  ajanının doğrulanmamış bir hipotezini (iade yolu sayaçları eksiye düşürebilir)
-  rapora girmeden ölçmeye zorladı; ölçüm hipotezi çürüttü ve bulgu düştü.
+- **Category 6 (combinations)** set up as a decision table produced a "surface ×
+  injection point × tenant relationship" matrix and carried the sweep from
+  2-3 endpoints to 14 surfaces. An improvised run stops at the first three of
+  these.
+- **Non-negotiable #8 (tenant isolation is a standing assertion, not a
+  category)** changed the shape of the claim: from "did it return 403" to
+  "which tenant did the record land in". This reframing directly produced the
+  run's heaviest finding (a payment could attach to another tenant's
+  sub-record) — and along the way showed that a claim expecting 403 would keep
+  passing even if the fix were reverted.
+- **Category 4 + the consistency oracle** caught sibling endpoints behaving
+  differently at the same boundary value (one 400, the other 500). Not
+  findable by exploration.
+- **The "read the basis backwards" rule** showed a deleted field wasn't
+  covered by any case; closed within the same run.
 
-**Maliyet/gürültü:**
+**Cost/noise:**
 
-- **Bir zamanlama bulgusu ilk ölçümde on kat abartıldı.** 25 turun 13'ü "kötü"
-  sayılmıştı; turların çoğunda ise koşul zaten herkes bittikten sonra devreye
-  girmişti, yani beklenen davranıştı. Zararsız sıralamalar ayıklanınca gerçek
-  rakam 30'da 3 oldu. Rapora girseydi düzeltme önceliği yanlış hesaplanırdı.
-- Rapor ve süit dosyası, worktree yerine ana çalışma kopyasına yazıldı; bir
-  `Edit` "dosya yok" deyince fark edildi. Mutlak yolu bir kez doğrulamak bunu
-  baştan keserdi.
+- An executor agent shied away from making a real external-provider call and
+  left the case as NOT RUN; the provider was actually reachable and safe, and
+  the case completed in two calls. The environment manifest records whether a
+  dependency *exists*, not whether *calling it is safe*.
+- Two fake FAILs, both from the same cause: an enum's identifier name was used
+  as if it were the wire value. The existing "a synthetic value must be
+  valid" rule talks about format checking; this mistake passes format
+  checking because the shape is correct.
+- 13 of 138 cases were BLOCKED, almost all from missing **fixture** data. The
+  environment inventory covered dependencies, not fixtures; all 13 were
+  discovered mid-run.
 
-**Doğaçlananlar (kural olmalı):**
+**Things I improvised that should be rules:**
 
-- **İddianın yaşadığı seviyede test etme.** Eşzamanlılık/kilit/izolasyon/atomiklik
-  iddiası, ne kadar yeşil olursa olsun mock'lu bir süitle kapsanmış sayılmaz;
-  en az bir case gerçek bağımlılığa karşı koşulmalı, yoksa rapor bunu o kelimelerle
-  yazmalı.
-- **Eşzamanlılıkta kırmızı-yeşil bir formalite değil.** Yeşil sonuç, aynı
-  harness'ın düzeltilmemiş kodda kırmızı verdiği gösterilene kadar bilgi
-  taşımıyor.
+- **A/B differential run.** Stand up the pre-change build side by side against
+  the same data store and run every finding against both. The run's single
+  most valuable move: "all eight findings are pre-existing" became a
+  measurement instead of a claim, surfaces that must not be touched could be
+  compared byte for byte, and the fix's red-green came out without writing a
+  separate test.
+- **Proving the baseline's validity first.** No A/B result was trusted until
+  it was shown that the old process's start time was before the first edit.
+  Without this step, the technique can prove the opposite of its own result.
 
-**Zorlanan non-negotiable:**
+**Non-negotiable strained:**
 
-- **#3 (kırmızı-yeşil)** eşzamanlılık bağlamında yetersiz kaldı: kural "test
-  düzeltme öncesi düşmeli" diyor, ama eşzamanlı bir senaryonun hiç
-  gerçekleşmemesi de aynı çıktıyı verir. Kuralın bu vakayı ayrıca adlandırması
-  gerekti.
+- **#6 (self-certification ban)** was strained from a place the rule doesn't
+  name: the person who wrote the change also designed the case list. The rule
+  wants execution independence, not design independence. The boundary-value
+  inconsistency in the new code they themselves wrote was found not by the
+  person who designed the list, but by an independent agent comparing the
+  same endpoints against a sibling endpoint.
+- **The verdict rule collided with reality:** "an open S2 on a critical flow →
+  NO-GO" was blocking a fix that closed a proven S1, because of a pre-existing
+  S2. The rule doesn't ask whose finding it is.
 
-**Öneriler:**
+**Proposals:**
 
-- P1 — eşzamanlılıkta kırmızı-yeşilin zorunluluğu (#3 genişletmesi) → UYGULANDI (v1.9.0)
-- P1 — yeni non-negotiable #9: testin iddianın seviyesinde koşması → UYGULANDI (v1.9.0)
-- P2 — zamanlama bulgusunda zararsız sıralamaların sayıdan önce ayıklanması
-  (Phase 3) → UYGULANDI (v1.9.0)
-- **P3 — AÇIK (devir):** ortam manifestinin bağımlılık tablosuna "çağrılması
-  güvenli mi" sütunu (2026-09-16 koşumundan). Bu koşumda tekrarlamadı — dış
-  sağlayıcı çağrısı gerektiren case yoktu — o yüzden P3 olarak açık kalıyor.
+- P1 — differential (A/B) execution technique + baseline validity proof → APPLIED (v1.8.0)
+- P1 — an attribution dimension on verdict rules → APPLIED (v1.8.0)
+- P2 — Phase 0 fixture inventory → APPLIED (v1.8.0)
+- P2 — design independence added to non-negotiable #6 → APPLIED (v1.8.0)
+- P3 — "read the value, not the name" added to the synthetic-value rule → APPLIED (v1.8.0)
+- **P3 — OPEN:** a "safe to call" column on the environment manifest's
+  dependency table. It currently only says *real / mock / none*; an executor
+  agent that doesn't know whether an external call has an irreversible cost
+  plays it safe and skips the case. If it recurs in a future run, it escalates
+  to P2.
+
+---
+
+## 2026-09-22 · L3 · backend API / service layer (concurrency + lock/isolation fix; report-only, then 3 fixes)
+
+**Cases:** 41 · **Result:** 33 PASS / 2 FAIL / 6 BLOCKED · **Verdict:** GO
+(0 findings attributable to the change; 2 findings measured pre-existing) ·
+**Skill version:** 1.8.0
+
+**Caught thanks to structure:**
+
+- **A/B differential run (§11), this time for validity rather than
+  attribution.** Running the pre-change build against the same data store
+  proved, in a single measurement, both that the bug was real and that the
+  harness could see it: the old code distributed four times the cap without
+  ever issuing a rejection, the new code stopped exactly at cap. Without this
+  measurement, the new build's green result and "concurrency simply never
+  collided" would have been indistinguishable.
+- **The requirement to run category 9 against a real dependency.** The
+  project's existing suite was fully green and carried zero information about
+  the change's central claim — a mocked lock sees neither a real Prisma lock
+  nor the isolation level. Every real finding in this run came from the
+  hand-built real-service/real-database harness.
+- **Separating a finding by whether it belongs to this change** showed that
+  both timing-sensitivity findings were pre-existing; one of them (the half
+  tied to the cap) was still charged to this change anyway, because the
+  number the fix clipped ran through exactly that path. Reporting the two as
+  a single finding would have put pressure to fix the out-of-scope half too.
+- **Arguing against your own verdict once (#7)** forced measuring an
+  independent design agent's unverified hypothesis (that refund-path counters
+  could go negative) before it entered the report; the measurement refuted
+  the hypothesis and the finding was dropped.
+
+**Cost/noise:**
+
+- **A timing finding was overstated tenfold on first measurement.** 13 of 25
+  rounds had been counted as "bad"; in most of those rounds the condition had
+  actually kicked in after everyone was already done — expected behaviour.
+  Once benign orderings were filtered out, the real number was 3 in 30. Had
+  it entered the report, fix priority would have been miscalculated.
+- The report and suite files were written to the main working copy instead of
+  the worktree; noticed when an `Edit` said "file not found". Verifying the
+  absolute path once would have cut this off from the start.
+
+**Things I improvised that should be rules:**
+
+- **Test at the level the claim lives at.** A concurrency/lock/
+  isolation/atomicity claim isn't considered covered by a mocked suite no
+  matter how green it is; at least one case must run against the real
+  dependency, or the report must say so in those words.
+- **Red-green isn't a formality for concurrency.** A green result carries no
+  information until the same harness is shown to go red on unfixed code.
+
+**Non-negotiable strained:**
+
+- **#3 (red-green)** fell short specifically for concurrency: the rule says
+  "the test must fail before the fix", but a concurrent scenario simply never
+  occurring produces the same output. The rule needed to name this case
+  specifically.
+
+**Proposals:**
+
+- P1 — red-green requirement for concurrency (extension of #3) → APPLIED (v1.9.0)
+- P1 — new non-negotiable #9: the test must run at the claim's own level → APPLIED (v1.9.0)
+- P2 — filtering benign orderings before counting a timing finding
+  (Phase 3) → APPLIED (v1.9.0)
+- **P3 — OPEN (carried forward):** a "safe to call" column on the environment
+  manifest's dependency table (from the 2026-09-16 run). Didn't recur in this
+  run — no case needed an external provider call — so it stays open as P3.

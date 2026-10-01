@@ -13,7 +13,7 @@ Apply mechanically, then state the rule you applied:
 | **GO WITH RISK** | No open S1; open S2 outside critical flows, or S3s that matter, or a mandatory category deliberately skipped — each listed with its risk and the reason it's acceptable now |
 | **GO** | No open S1/S2; remaining findings are S3/S4 with known workarounds; every mandatory catalogue row has at least one executed case; critical-flow smoke green |
 
-Write it as: `NO-GO — açık 1 adet S1 (kupon iki kez uygulanabiliyor, #3)`.
+Write it as: `NO-GO — 1 open S1 (coupon can be applied twice, #3)`.
 
 ### Attribution — the change is judged on what it caused
 
@@ -36,8 +36,8 @@ it; without a baseline, the label is provisional and so is this rule's benefit).
 - A finding that appears **only on the new build** is a regression and carries
   full weight — an open S1 there is `NO-GO` however small the diff.
 - Say the attribution split in the verdict line, because it's the part a reader
-  will otherwise get wrong: `GO WITH RISK — değişikliğe atfedilebilen 0 bulgu;
-  açık 2×S2 önceden var (A/B ile doğrulandı), ayrı ticket`.
+  will otherwise get wrong: `GO WITH RISK — 0 findings attributable to the
+  change; 2×S2 pre-existing and open (verified via A/B), separate ticket`.
 
 The honest framing for the user, when a pre-existing finding is what's holding
 the verdict below `GO`: shipping does not make it worse, and not shipping does

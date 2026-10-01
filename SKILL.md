@@ -20,8 +20,9 @@ same millisecond, and the state you're only supposed to reach through the UI.
 A run that ends with "everything works" and three happy-path checks is a failed
 run: it produced no information and it spent the user's trust.
 
-**Language:** write the report and findings in the language the user is speaking
-(Turkish in a Turkish conversation). Keep code, identifiers and log excerpts as-is.
+**Language:** write the report, findings and QA memory files in English, regardless
+of the language the user is speaking in conversation. Keep code, identifiers and
+log excerpts as-is.
 
 **Not your job:** how to start the project, seed the database, or reach the
 environment. The user tells you that, or the session already knows. Never invent
@@ -92,17 +93,17 @@ Not every change deserves a 90-case sweep, and the difference between levels is
 an hour of the user's time. So **before Phase 0, ask** — one short question block,
 two things, then get out of the way:
 
-1. **Level** — the table below. Ask unless the user already signalled it ("hızlı
-   bir bakış yeter", "canlıya çıkacak, tam test", or a named level). **Put a price
-   tag on each option you offer**: estimated case count for *this* feature and a
-   rough wall-clock/token cost ("L2 ≈ 30–40 case, ~yarım saat; L3 ≈ 100+ case,
-   birkaç saat + ciddi token"). A level choice without a cost estimate is not an
-   informed decision — the user may pick L3 without realising what it costs, or
-   L1 without realising what it skips.
+1. **Level** — the table below. Ask unless the user already signalled it ("a quick
+   look is enough", "this is going live, full test", or a named level). **Put a
+   price tag on each option you offer**: estimated case count for *this* feature
+   and a rough wall-clock/token cost ("L2 ≈ 30–40 cases, ~half an hour; L3 ≈ 100+
+   cases, a few hours + significant token spend"). A level choice without a cost
+   estimate is not an informed decision — the user may pick L3 without realising
+   what it costs, or L1 without realising what it skips.
 2. **Fix or report** — default **report only**: find the bugs, write them up, and
    end by asking which to fix, so the user keeps control of the code and bug
    hunting doesn't quietly become refactoring. Fix mode only on request; if they
-   said "sadece raporla", skip Phase 5 and don't offer.
+   said "just report it", skip Phase 5 and don't offer.
 
 Skip either one the user has already answered, and never ask twice in one session.
 If nobody is there to answer (scheduled/unattended run), take **L2**, report-only,
@@ -111,22 +112,23 @@ choice is settled policy, below.
 
 ### Levels
 
-| Level | Ne zaman | Kapsam (tier) | Kategoriler | Tipik case | Doğrulama |
+| Level | When | Scope (tier) | Categories | Typical cases | Verification |
 |-------|----------|---------------|-------------|-----------|-----------|
-| **L1 · Smoke** | Küçük değişiklik, refactor, hotfix sonrası "bozmadım değil mi" kontrolü | A + kritik akış smoke (C) | 1, 2, 3 ve varsa 7'nin temel hâli | 8–15 | Sadece S1/S2 için |
-| **L2 · Standart** | Günlük varsayılan: yeni bir feature bitti, canlıya bugün çıkmıyor | A + B + C | 1–14, artı riskliyse 15 | 25–45 | Tüm bulgular |
-| **L3 · Sürüm kapısı** | Canlıya çıkış öncesi, para/veri/yetkiye dokunan işler, uzun süredir taranmamış alanlar | A + B + C + D (rotasyon) | 1–20'nin tamamı + prod öncesi checklist | 60–120 | Tüm bulgular + paralel ajan koşumu |
-| **Odaklı** | "Sadece yetki tarafına bak", "şu endpoint'i kır" | Kullanıcının verdiği alan | Sadece ilgili kategoriler, L3 derinliğinde | değişken | Tüm bulgular |
+| **L1 · Smoke** | Small change, refactor, "did I break anything" check after a hotfix | A + critical-flow smoke (C) | 1, 2, 3 and, if applicable, a basic pass of 7 | 8–15 | S1/S2 only |
+| **L2 · Standard** | Daily default: a new feature is done, not shipping today | A + B + C | 1–14, plus 15 if risky | 25–45 | All findings |
+| **L3 · Release gate** | Before going live, work touching money/data/permissions, areas not swept in a long time | A + B + C + D (rotation) | all of 1–20 + pre-production checklist | 60–120 | All findings + parallel agent run |
+| **Focused** | "Just look at the permission side", "try to break this endpoint" | The area the user names | Only the relevant categories, at L3 depth | variable | All findings |
 
-L1'de bile kural aynı: kapsam daraldı diye kanıt disiplini gevşemiyor,
-kapsanmayan kategoriler rapora "atlandı + gerekçe" olarak yazılıyor. L1 bir
-sürüm kararı vermez — raporun kararı en fazla `GO WITH RISK` olabilir, çünkü
-zeminin çoğu test edilmemiştir.
+Even at L1 the rule is the same: a narrower scope doesn't loosen the evidence
+discipline, and categories not covered are written into the report as "skipped +
+reason". L1 cannot produce a release decision — the report's verdict can be at
+best `GO WITH RISK`, because most of the ground was never tested.
 
-Bir üst seviyeye kendiliğinden **çıkabilirsin**: L1'de S1 bulursan veya diff
-beklenenden geniş çıkarsa, durup söyle ("L1 istemiştin ama para hesabına dokunan
-bir S1 var — L2'ye çıkmamı ister misin?"). Aşağıya inmek hiç: kullanıcı istemeden
-kapsamı daraltmak sessiz bir taviz olur.
+You can **escalate** to a higher level on your own: if you find an S1 at L1, or
+the diff turns out wider than expected, stop and say so ("you asked for L1, but
+there's an S1 touching the money calculation — want me to escalate to L2?").
+Never descend on your own: narrowing scope without the user asking is a silent
+concession.
 
 ### Model policy — don't ask, just apply
 
@@ -160,7 +162,7 @@ not execute is `NOT RUN`, never a guessed verdict.
 Two variants of the same process, not separate processes — every rule above
 still applies. Read `references/run-modes.md` when either fits:
 
-- **PR mode** — the user points you at a pull request ("bu PR'ı test et"): tier A
+- **PR mode** — the user points you at a pull request (e.g. "test this PR"): tier A
   is the diff, plus a condensed PR-comment version of the report.
 - **Sentinel mode** — the skill is wired to a scheduler and nobody is there to
   answer: L2, report-only, nothing outward-facing.
@@ -202,8 +204,8 @@ Then write down explicitly:
   3. The previous version's behaviour (`git log -p`) for anything the spec is
      silent about.
   4. The oracle heuristics in `references/oracles.md` for what remains — say
-     which one you leaned on. "Bence yanlış" is not a basis; "sibling endpoints
-     behave the other way" is.
+     which one you leaned on. "I think this is wrong" is not a basis; "sibling
+     endpoints behave the other way" is.
 
   **The basis itself can be defective.** A spec that contradicts itself, forgets
   the error path, or silently disagrees with the schema is a finding too — report
@@ -221,7 +223,7 @@ Then write down explicitly:
   feature touches (identity provider, payment gateway, RPC service, mail, queue,
   third-party API) and mark each one *real here / mocked / absent* per target
   environment. Every case that needs an absent dependency is marked
-  `BLOCKED (ortam)` **at design time**, with where it *can* run noted — so no
+  `BLOCKED (environment)` **at design time**, with where it *can* run noted — so no
   subagent burns tokens discovering mid-run that a dependency doesn't exist, and
   the blocked cases are a plan, not a surprise. **Never write credentials into
   the manifest** — reference where they live instead.
@@ -256,8 +258,8 @@ Then write down explicitly:
   2. **Not documented but derivable?** Extract it from the project: auth
      guards/middleware, security config, existing token scripts, README/docs,
      how the project's own tests authenticate.
-  3. **Not derivable?** Ask the user — one focused question ("admin endpoint'leri
-     nasıl yetkilendiriliyor, token'ı nereden alayım?"), fold it into the kickoff
+  3. **Not derivable?** Ask the user — one focused question ("how are admin
+     endpoints authorised, where do I get the token from?"), fold it into the kickoff
      block when possible — and **write the answer into the manifest** so no
      future run ever asks again. Asking twice for the same documented fact is a
      process failure; log it in the retrospective.
@@ -269,7 +271,7 @@ Then write down explicitly:
   snapshot under `.qa/contracts/` and diff the current contract against it at
   the start of every run. Every breaking change — removed endpoint/field,
   changed type, tightened validation, renamed operation — automatically becomes
-  a tier A case and a candidate finding ("breaking change: kasıtlı mı?"), because
+  a tier A case and a candidate finding ("breaking change: intentional?"), because
   the consumers of a contract are exactly the users who can't see the diff.
   Refresh the snapshot in Phase 6 once the verdict lands, never before.
 
@@ -312,7 +314,7 @@ to `test-cases-<feature>-<date>.md`. Format, ID scheme and status values:
 |----|------|----------|----------|-------|---------------------|-------|----------|--------|----------|
 
 The **Basis** column is what keeps expectations honest — one short reference per
-case (`ticket §2`, `şema: unique(email)`, `oracle: history`, `oracle: claims`).
+case (`ticket §2`, `schema: unique(email)`, `oracle: history`, `oracle: claims`).
 When you're done designing, read the basis items backwards: any rule, acceptance
 criterion or documented promise with **no case pointing at it** is a coverage
 hole, and it goes in the report even if you chose not to test it.
@@ -327,8 +329,8 @@ and every cross-reference in `known-issues.md` silently becomes ambiguous.
 **Then show it before running.** Deliver the file and summarise it in a few
 lines: total case count, count per category, and which categories you're skipping
 with the reason. Default: hand it over and start executing right away — the file
-is there so the user can interrupt and add cases. If they say "önce listeyi
-onaylayayım", wait for their review instead; if they add scenarios, append them
+is there so the user can interrupt and add cases. If they say "let me approve the
+list first", wait for their review instead; if they add scenarios, append them
 with new IDs before you begin.
 
 **Reuse and grow the suite.** If `.qa/suites/<feature>.md` already exists from an
@@ -346,7 +348,7 @@ Within that range, rows marked **always** need at least one *executed* case, or 
 explicit stated reason why they don't apply ("no auth layer in this module",
 "pure function, no persistence"). Rows marked **if applicable** are judgement
 calls — but say in the report which ones you judged out. Rows outside the range
-are listed in the report as "seviye gereği atlandı", not silently dropped.
+are listed in the report as "skipped due to level", not silently dropped.
 
 | # | Category | Generate cases for | When |
 |---|----------|--------------------|------|
@@ -400,7 +402,7 @@ not 6 — and happy path should be a small minority of them.
 
 **Coverage summary rule:** the report must carry a table with one row per
 category from the catalogue — case count, PASS/FAIL/NOT RUN, and for anything at
-zero, the reason. That table is what makes "kapsamlı test edildi" a checkable
+zero, the reason. That table is what makes "tested comprehensively" a checkable
 claim instead of a promise. Build it as you go rather than reconstructing it at
 the end.
 
@@ -507,7 +509,7 @@ at L1 for S1/S2 findings, at L2 and L3 for all of them. Try to **refute** it:
   same evidence standard as the finding itself. With a baseline available, re-run
   the probe against it and attach both outputs; without one, reading the diff and
   the blame history is the fallback — and then the label is written as
-  *muhtemelen önceden var*, not as fact.
+  *likely pre-existing*, not as fact.
 - Check `.qa/accepted-behaviours.md`: is this intended behaviour someone already
   decided on?
 - Confirm "expected" is anchored in something real — a requirement, schema,
@@ -552,7 +554,7 @@ deliver it. Structure, severity rubric and templates:
   produced it, and the pre-production checklist. Both live in
   `references/release-gate.md` — read it before writing the verdict.
 - **`BLOCKED` is a debt, not a footnote.** Every `BLOCKED` case goes into an
-  explicit "başka ortamda koşulacaklar" list in the report — case ID, what blocks
+  explicit "to run in another environment" list in the report — case ID, what blocks
   it, and the environment where it *can* run. Carry the same list into
   `.qa/regression-log.md` in Phase 6 as an input for the next run; a blocked case
   that is never re-queued is a coverage hole wearing an honest label.
@@ -676,7 +678,7 @@ release procedure — are in `references/skill-maintenance.md`.
   what to change, why (pointing at what happened this run), and the version bump
   it implies. Apply them to the skill files **only with the user's approval** —
   the rules were approved once, and changing them silently would make every past
-  approval meaningless. Unattended: leave them marked `ÖNERİ — onay bekliyor`.
+  approval meaningless. Unattended: leave them marked `PROPOSAL — awaiting approval`.
 - **Generalise before you propose — the skill stays project-agnostic.** It must
   work unchanged on any project: frontend, backend or command-line tool; any
   language, framework or domain. So `SKILL.md` and `references/` never name a

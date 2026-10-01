@@ -37,7 +37,7 @@ approval** — the skill's rules were approved once; changing them silently woul
 make every past approval meaningless.
 
 If the user is absent (unattended run), leave the proposals in
-`RETROSPECTIVES.md` marked `ÖNERİ — onay bekliyor` and surface them at the start
+`RETROSPECTIVES.md` marked `PROPOSAL — awaiting approval` and surface them at the start
 of the next attended run.
 
 ## Generalise before you propose — the skill stays project-agnostic

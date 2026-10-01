@@ -66,17 +66,17 @@ The flows that must never break. Smoke-tested every run (tier C) regardless of
 what the diff touched.
 
 ```markdown
-# Kritik akışlar
+# Critical flows
 
-## CF-1 — API key ile kimlik doğrulama
-- Adımlar: geçerli key ile GET /v1/... → 200; geçersiz key → 401
-- Neden kritik: tüm entegrasyonlar buna bağlı
-- Son doğrulama: 2026-08-20 ✅
+## CF-1 — API key authentication
+- Steps: GET /v1/... with a valid key → 200; invalid key → 401
+- Why critical: every integration depends on it
+- Last verified: 2026-08-20 ✅
 
-## CF-2 — Sipariş oluşturma
-- Adımlar: sepet → POST /v1/orders → DB'de kayıt + stok düşümü
-- Neden kritik: gelir akışı
-- Son doğrulama: 2026-08-20 ✅
+## CF-2 — Order creation
+- Steps: cart → POST /v1/orders → DB record + stock decrement
+- Why critical: revenue flow
+- Last verified: 2026-08-20 ✅
 ```
 
 ## `.qa/known-issues.md`
@@ -86,18 +86,18 @@ twice — before designing a matrix, check whether any of these could recur in t
 area you're testing.
 
 ```markdown
-# Bilinen hatalar
+# Known issues
 
-## BUG-014 — Kupon eşzamanlı iki istekte iki kez uygulanıyor
-- Alan: kupon / sipariş oluşturma
-- Bulundu: 2026-08-20 | Severity: S1 | Durum: düzeltildi (commit abc1234)
-- Kök neden: kupon kullanım sayacında kilit yok
-- Kalıcı test: `tests/test_coupon.py::test_concurrent_redeem`
-- Tekrarlama riski: kupon/kota/stok sayacı içeren her yeni özellik
+## BUG-014 — Coupon applied twice on two concurrent requests
+- Area: coupon / order creation
+- Found: 2026-08-20 | Severity: S1 | Status: FIXED (commit abc1234)
+- Root cause: no lock on the coupon usage counter
+- Regression test: `tests/test_coupon.py::test_concurrent_redeem`
+- Recurrence risk: any new feature with a coupon/quota/stock counter
 
-## BUG-015 — Silinen kayıt export'ta görünüyor
-- Bulundu: 2026-08-18 | Severity: S2 | Durum: açık
-- Not: liste sorgusunda soft-delete filtresi var, export sorgusunda yok
+## BUG-015 — Deleted record shows up in export
+- Found: 2026-08-18 | Severity: S2 | Status: OPEN
+- Note: the list query has a soft-delete filter, the export query doesn't
 ```
 
 ## `.qa/accepted-behaviours.md`
@@ -106,12 +106,13 @@ Things that look like bugs but are intended. This file is what stops the report
 from crying wolf on the same three items every release.
 
 ```markdown
-# Kabul edilmiş davranışlar (bug değil)
+# Accepted behaviours (not bugs)
 
-- 404 yerine 403 dönmüyoruz: varlık sızıntısını engellemek için bilinçli tercih.
-  (Karar: 2026-07-02, Ünal)
-- Tarihler UTC saklanıp UI'da çevriliyor; API her zaman UTC döner. Kasıtlı.
-- Boş isim alanı kabul ediliyor: eski entegrasyonlar bozulmasın diye.
+- We return 403 instead of 404 on purpose: a deliberate choice to prevent
+  existence leakage. (Decision: 2026-07-02, Ünal)
+- Dates are stored in UTC and converted in the UI; the API always returns UTC.
+  Deliberate.
+- An empty name field is accepted, so old integrations don't break.
 ```
 
 ## `.qa/regression-log.md`
@@ -120,12 +121,12 @@ One line per run. Gives you the rotation for tier D, and a history the user can
 skim to see what has and hasn't been swept lately.
 
 ```markdown
-# Test koşum günlüğü
+# Test run log
 
-| Tarih | Kapsam (tier A) | Rotasyon (tier D) | Senaryo | Bulgu | Karar |
+| Date | Scope (tier A) | Rotation (tier D) | Scenarios | Findings | Verdict |
 |-------|-----------------|-------------------|---------|-------|-------|
-| 2026-08-20 | kupon indirimi | webhook işleme | 47 | 1×S1, 2×S3 | NO-GO → düzeltildi → GO |
-| 2026-08-14 | fatura PDF | kullanıcı davetleri | 38 | 1×S2 | GO WITH RISK |
+| 2026-08-20 | coupon discount | webhook processing | 47 | 1×S1, 2×S3 | NO-GO → fixed → GO |
+| 2026-08-14 | invoice PDF | user invitations | 38 | 1×S2 | GO WITH RISK |
 ```
 
 ## `.qa/environment.md`
@@ -136,46 +137,46 @@ Phase 6 with what the run taught you. Never a credential in here — only where
 credentials live.
 
 ```markdown
-# Ortam manifesti
+# Environment manifest
 
-## Hedef ortamlar
-| Ortam | Erişim | Prod mu? | Not |
+## Target environments
+| Environment | Access | Prod? | Note |
 |-------|--------|----------|-----|
-| lokal | http://localhost:<port> | hayır | seed: <projenin seed komutu> |
-| staging | https://staging.example.com | hayır | test kullanıcıları: secret manager `qa/staging` |
-| prod | — | **EVET — test edilmez** | sadece Phase 6.5 read-only smoke, istek üzerine |
+| local | http://localhost:<port> | no | seed: <the project's seed command> |
+| staging | https://staging.example.com | no | test users: secret manager `qa/staging` |
+| prod | — | **YES — never tested** | only Phase 6.5 read-only smoke, on request |
 
-## Erişim ve kimlik doğrulama (test playbook'u)
-<!-- Yüzey başına: hangi yöntem koruyor + credential NASIL edinilir (script/seed/
-     env adı/vault yolu). Secret'ın kendisi ASLA buraya yazılmaz. -->
-| Yüzey | Yöntem | Credential edinme | Not |
+## Access and authentication (test playbook)
+<!-- Per surface: which method guards it + HOW to obtain the credential (script/seed/
+     env name/vault path). The secret itself is NEVER written here. -->
+| Surface | Method | Obtaining a credential | Note |
 |-------|--------|-------------------|-----|
-| <kullanıcı API'si> | Bearer JWT | <token script'i / login akışı> | test kullanıcısı: <kim sağlar / vault yolu> |
-| <admin yüzeyi> | Basic auth | env: <DEĞİŞKEN_ADI> | |
-| <partner API'si> | API token | <seed adımı / üretme komutu> | scope: <...> |
-| <webhook'lar> | imza / basic + IP filtresi | <nasıl taklit edilir> | |
+| <user API> | Bearer JWT | <token script / login flow> | test user: <who provides it / vault path> |
+| <admin surface> | Basic auth | env: <VARIABLE_NAME> | |
+| <partner API> | API token | <seed step / generation command> | scope: <...> |
+| <webhooks> | signature / basic + IP filter | <how to fake it> | |
 
-## Dış bağımlılık gerçekliği
-| Bağımlılık | lokal | staging | Not |
+## External dependency reality
+| Dependency | local | staging | Note |
 |------------|-------|---------|-----|
-| kimlik sağlayıcı | gerçek | gerçek | |
-| ödeme gateway'i | mock | sandbox | gerçek para asla |
-| e-posta | yok | sandbox | gerçek adrese gönderim yasak |
-| harici RPC servisi | YOK | gerçek | lokalde bu case'ler BLOCKED (ortam) |
+| identity provider | real | real | |
+| payment gateway | mock | sandbox | never real money |
+| e-mail | none | sandbox | sending to a real address is forbidden |
+| external RPC service | NONE | real | these cases are BLOCKED (environment) locally |
 
-## Fixture envanteri
-<!-- Bağımlılığın gerçek olması yetmez: case'in ihtiyaç duyduğu tohum kayıt yoksa
-     case koşulamaz ve bu, ortam eksiğinden daha sık rastlanan engeldir. Varlık
-     başına ne VAR ne YOK yazılır; eksik olan tasarım anında BLOCKED (fixture)
-     olur, koşum ortasında keşfedilmez. -->
-| Varlık | Ortamda var olan | Eksik | Nasıl yaratılır |
+## Fixture inventory
+<!-- A real dependency isn't enough: if the seed record a case needs doesn't
+     exist, the case can't run — and that's a more common blocker than a missing
+     dependency. Record what EXISTS and what's MISSING per entity; a missing one
+     becomes BLOCKED (fixture) at design time, not discovered mid-run. -->
+| Entity | Exists in the environment | Missing | How to create it |
 |--------|------------------|-------|-----------------|
-| <hesap / kiracı> | <2 adet; biri boş> | <ikinci rolde üye kullanıcı> | <seed komutu / API çağrısı> |
-| <bakiye / kota> | <yalnızca sıfır bakiye> | <pozitif bakiyeli hesap> | <script> |
-| <durum makinesi kaydı> | <draft, paid> | <expired, refunded> | <nasıl o duruma sürülür> |
+| <account / tenant> | <2; one is empty> | <a member user with the second role> | <seed command / API call> |
+| <balance / quota> | <zero balance only> | <an account with a positive balance> | <script> |
+| <state machine record> | <draft, paid> | <expired, refunded> | <how to drive it to that state> |
 
-## Bilinen ortam tuzakları
-- <ör. lokalde saat dilimi UTC, staging'de değil>
+## Known environment traps
+- <e.g. local timezone is UTC, staging isn't>
 ```
 
 ## `.qa/metrics.md`
@@ -187,11 +188,11 @@ and false alarms trending down means the process rules are working; `escaped`
 staying at zero is the only claim that ages well.
 
 ```markdown
-# Koşum metrikleri
+# Run metrics
 
-| Tarih | Feature | Seviye | Case | Bulgu (S1/S2/S3/S4) | Bulgu/case | Yanlış alarm (Ph3 elenen) | Sahte FAIL (harness) | BLOCKED | Kaçan (escaped) | Maliyet (~) |
+| Date | Feature | Level | Cases | Findings (S1/S2/S3/S4) | Findings/case | False alarms (ruled out in Ph3) | Fake FAILs (harness) | BLOCKED | Escaped | Cost (~) |
 |-------|---------|--------|------|---------------------|------------|---------------------------|----------------------|---------|-----------------|-------------|
-| 2026-08-20 | kupon indirimi | L3 | 120 | 0/1/2/0 | 0.025 | 1 | 3 | 1 | 0 | ~3 saat |
+| 2026-08-20 | coupon discount | L3 | 120 | 0/1/2/0 | 0.025 | 1 | 3 | 1 | 0 | ~3 hours |
 ```
 
 ## `.qa/contracts/` and `.qa/evidence/`
@@ -217,7 +218,7 @@ staying at zero is the only claim that ages well.
 - **Phase 3:** before promoting a finding, check it against
   `accepted-behaviours.md`.
 - **Phase 6:** append the new bugs, log the run in both `regression-log.md` and the
-  suite's own `## Koşum geçmişi`, add any new critical flow, record anything the
+  suite's own `## Run history`, add any new critical flow, record anything the
   user just declared intended.
 
 One more compounding move worth suggesting to the user: every regression test
