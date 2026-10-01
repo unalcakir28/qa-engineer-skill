@@ -46,6 +46,17 @@ the evidence rule (real command, real output, status per row). Merge the results
 yourself, run Phase 3 verification on the strong model, and keep ownership of the
 verdict — you are the one signing the report.
 
+**When the lead may execute instead.** Delegation exists to protect the lead's
+context and to move token spend to the cheaper model; it is not a goal of its
+own. If the groups cannot be given isolated fixtures — the cases share one
+seeded graph of records that cannot be cloned cheaply, or they deliberately
+drain or contend on the same finite resource — parallel agents would poison each
+other's assertions. In that case the lead may run the list itself, provided the
+cases are mechanised as scripts (each case a function that records status and
+raw evidence) rather than walked by hand, so context does not degrade towards
+the end of the list. Say so in the report and in the metrics row, with the reason
+("execution by the lead: shared fixture could not be isolated per group").
+
 Three rules that keep a parallel run honest:
 
 - **Each agent seeds its own isolated fixture set** (own org/tenant/user/records,

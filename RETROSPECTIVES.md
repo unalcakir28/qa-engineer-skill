@@ -641,3 +641,44 @@ P1. If approved, MINOR: v1.7.0.
 - **P3 — OPEN (carried forward):** a "safe to call" column on the environment
   manifest's dependency table (from the 2026-09-16 run). Didn't recur in this
   run — no case needed an external provider call — so it stays open as P3.
+
+## 2026-10-01 · L3 · backend API, permission restriction on a state-mutating endpoint (fix mode on)
+
+**What the structure caught:**
+
+- **The A/B differential decided the verdict.** Every S2/S3 found reproduced
+  identically on the pre-change build, so attribution was measured, not argued,
+  and the change itself was proven red-green: the behaviours it removed still
+  succeeded on the baseline and were rejected on the branch.
+- **Design independence paid off.** The case list from a subagent that saw only
+  the diff and the basis predicted two defects from code reading (a lock-order
+  deadlock, sub-unit amounts desyncing two columns of different precision);
+  both reproduced against the real dependency.
+- **A conservation oracle** (the sum of a conserved quantity before vs after) turned "two stores of
+  the same quantity disagree" from a suspicion into a number.
+
+**Cost/noise:**
+
+- The documented credential for the auth surface no longer worked. Recovering
+  cost time; the fix was a QA-only bootstrap that skipped only the signature
+  check and kept every other layer real, declared in the report.
+- Two expectations were too strict on the error *code* while the basis only
+  fixed the *outcome* (rejected, no side effect); reclassified in Phase 3.
+
+**Things I improvised that should be rules:**
+
+- **Lead execution by script when fixtures cannot be isolated** (see v1.10.0).
+- **When the documented access method breaks, a harness that disables only the
+  credential check — and nothing else — is acceptable**, if the report names
+  exactly which layer was bypassed and lists real-credential validation as
+  BLOCKED.
+
+**Non-negotiable strained:** none.
+
+**Proposals:**
+
+- P2 — lead may execute when fixtures cannot be isolated, scripted, declared → APPLIED (v1.10.0)
+- **P3 — PROPOSAL — awaiting approval:** document the "bypass only the credential
+  check" fallback in the access-playbook section, with the reporting obligation.
+- **P3 — OPEN (carried forward):** "safe to call" column on the environment
+  manifest's dependency table. Did not recur.

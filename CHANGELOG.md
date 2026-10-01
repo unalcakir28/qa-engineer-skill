@@ -3,6 +3,22 @@
 Semver. Every approved change is recorded here, along with which run's
 retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.10.0] — 2026-10-01
+
+Motivation: retrospective of the 2026-10-01 L3 run (backend API, a permission
+restriction on a state-mutating endpoint). Every case shared one seeded graph
+of related records, and the concurrency cases deliberately drained the same
+shared counters, so splitting execution across parallel agents would
+have made them corrupt each other's assertions.
+
+### Changed
+
+- **`references/run-modes.md` — the lead may execute a large list itself** when
+  the groups cannot be given isolated fixtures, provided the cases are
+  mechanised as scripts that record status and raw evidence per case. The
+  deviation and its reason go into the report and the metrics row. Delegation is
+  a means (context protection, cheaper tokens), not a goal.
+
 ## [1.9.0] — 2026-09-22
 
 Motivation: retrospective of the 2026-09-22 L3 run (backend service layer,
