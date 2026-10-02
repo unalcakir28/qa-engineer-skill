@@ -678,7 +678,46 @@ P1. If approved, MINOR: v1.7.0.
 **Proposals:**
 
 - P2 — lead may execute when fixtures cannot be isolated, scripted, declared → APPLIED (v1.10.0)
-- **P3 — PROPOSAL — awaiting approval:** document the "bypass only the credential
-  check" fallback in the access-playbook section, with the reporting obligation.
+- P3 — document the "bypass only the credential check" fallback → APPLIED (v1.11.0, recurred on 2026-10-02)
 - **P3 — OPEN (carried forward):** "safe to call" column on the environment
   manifest's dependency table. Did not recur.
+
+## 2026-10-02 · L2 · backend API, idempotency keys and asynchronous batch verdicts (fix mode on)
+
+**What the structure caught:**
+
+- **The cold design review found where the defects were.** A reviewer that saw
+  only the diff, the basis and the finished list added nine cases; both confirmed
+  defects came from them (a replay answered by a later rule instead of the
+  idempotency rule, and a write-off that ignored a durable ownership link).
+- **A/B made every ticket a measured red-green**, including a real race: the
+  baseline went 0/10 on the same harness that went 10/10 on the branch, with
+  start timestamps proving the overlap.
+- **Exercising the real scheduler** (backdating a row and waiting for the tick)
+  verified a sweep fix through its actual trigger instead of a direct call.
+
+**Cost/noise:**
+
+- Running two builds side by side would have mixed their async jobs (shared
+  queues); A/B had to be sequential.
+- Three false alarms, all harness-made: an org-wide aggregate moved by parallel
+  executors, a downstream record read before its async writer ran, and an
+  assertion on a field that lived one level deeper. All caught in Phase 3.
+
+**Things I improvised that should be rules:**
+
+- Stub only the lookup in front of the logic, with failure-mode switches
+  (→ v1.11.0).
+- Sequential A/B for async probes (→ v1.11.0).
+
+**Non-negotiable strained:** #6 — the lead wrote the code; design independence
+came only from the reviewer subagent, which is why it is now the default.
+
+**Proposals:**
+
+- P2 — cold case-list review default at L2+ → APPLIED (v1.11.0)
+- P2 — sequential A/B for async probes → APPLIED (v1.11.0)
+- P3 — lookup-dependency stub instead of blanket BLOCKED → APPLIED (v1.11.0)
+- **P3 — OPEN:** a harness note in `test-data.md` — with parallel executors,
+  assert through records attributable to the case, never through a shared
+  aggregate, and wait for the downstream effect before counting it.

@@ -202,10 +202,16 @@ was built from, or a build/process start time that predates the first edit — a
 write that proof into the report. Every "pre-existing" label in it rests on that
 one fact.
 
-Two hygiene rules: both instances must share the data store (otherwise you are
-comparing fixtures, not code), and mutating probes run against throwaway
+Three hygiene rules: both instances must share the data store (otherwise you are
+comparing fixtures, not code); mutating probes run against throwaway
 fixtures, because a write issued to the baseline lands in the same database the
-new build reads.
+new build reads; and **asynchronous work breaks "side by side"**. If both builds
+attach to the same queue, broker, outbox table or scheduler, a job one build
+enqueues is consumed by whichever worker grabs it first, and the result is
+attributed to the wrong code. For any probe whose outcome is decided off the
+request path, run the builds **one at a time** — stop one before starting the
+other — or give each its own broker namespace, and say in the report which you
+did. Synchronous probes can still run in parallel.
 
 It does not always apply — a brand-new feature has nothing to compare against,
 the two versions may not be able to share a schema, and running old code against

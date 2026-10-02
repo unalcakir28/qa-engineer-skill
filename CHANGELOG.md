@@ -3,6 +3,30 @@
 Semver. Every approved change is recorded here, along with which run's
 retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.11.0] — 2026-10-02
+
+Motivation: retrospective of the 2026-10-02 L2 run (backend API, idempotency
+keys and asynchronous batch verdicts, fix mode on). The independent design
+review added nine cases, and the two defects the run found came from them; the
+A/B differential had to run the builds sequentially because both consumed the
+same queues; and a dependency-lookup stub plus a credential-check bypass made
+otherwise blocked cases executable.
+
+### Added
+
+- Phase 1: an independent cold review of the case list is the default at L2 and
+  above (mandatory when you wrote the change), with review-added cases marked.
+- Phase 0: replace a lookup-only absent dependency with a harness-driven stub
+  (with failure-mode switches) instead of blocking every case behind it.
+- Phase 0 access playbook: the "disable only the credential check" fallback,
+  with its reporting obligation (closes the P3 proposal from 2026-10-01).
+
+### Changed
+
+- `techniques.md` §11: a third A/B hygiene rule — builds that share a queue,
+  broker, outbox or scheduler run one at a time (or with separate namespaces)
+  for any probe decided off the request path.
+
 ## [1.10.0] — 2026-10-01
 
 Motivation: retrospective of the 2026-10-01 L3 run (backend API, a permission

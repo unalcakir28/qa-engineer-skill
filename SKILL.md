@@ -1,6 +1,6 @@
 ---
 name: qa-engineer
-version: 1.10.0
+version: 1.11.0
 description: Act as the project's QA engineer before a change ships - risk analysis, a numbered case list designed with real test techniques (boundary values, equivalence classes, decision tables, pairwise), execution across functional, negative, boundary, permission, state, concurrency, data-integrity, resilience and security categories, every finding verified, closing with a severity-ranked report and a GO / NO-GO verdict. Use whenever the user asks to test, verify, validate, QA, break, stress, regression-check or pre-release review a feature, endpoint, screen, CLI command or change - including Turkish phrasings like "test et", "kapsamli test", "kirmaya calis", "QA yap" - and whenever you have just implemented something and are about to verify it. The default depth is a full sweep, not happy-path.
 ---
 
@@ -227,6 +227,13 @@ Then write down explicitly:
   subagent burns tokens discovering mid-run that a dependency doesn't exist, and
   the blocked cases are a plan, not a surprise. **Never write credentials into
   the manifest** — reference where they live instead.
+  Before blocking a case on an absent dependency, check whether the dependency is
+  only a *lookup* in front of the logic under test (an identity resolver, a
+  signature check, a rate quote). If so, a QA-only bootstrap that replaces exactly
+  that call — driven by a table the harness controls, with switches for its
+  failure modes (transient error, slowness) — lets the real code behind it run.
+  Every other layer stays real, the report names the bypassed layer in one line,
+  and the cases that need the real dependency's own behaviour stay `BLOCKED`.
 - **The fixture inventory — the same treatment for data.** A dependency being
   real doesn't help if the seed record the case needs doesn't exist, and this is
   the more common blocker of the two. Alongside the dependency table, record per
@@ -265,7 +272,11 @@ Then write down explicitly:
      process failure; log it in the retrospective.
   When a run reveals the documented method changed, broke, or a new method
   appeared, update the manifest in Phase 6 — a stale playbook is worse than none
-  because it fails with confidence.
+  because it fails with confidence. If the documented credential stops working
+  mid-run, a bootstrap that disables **only** the credential check (e.g. accepts
+  an unsigned token with a chosen identity) is an acceptable fallback, provided
+  guards, permissions and data stay real, the report says exactly which check was
+  skipped, and validation with a real credential is listed as `BLOCKED`.
 - **The contract diff.** If the project exposes a public contract (OpenAPI spec,
   GraphQL/proto schema, exported client types, published event payloads), keep a
   snapshot under `.qa/contracts/` and diff the current contract against it at
@@ -332,6 +343,16 @@ with the reason. Default: hand it over and start executing right away — the fi
 is there so the user can interrupt and add cases. If they say "let me approve the
 list first", wait for their review instead; if they add scenarios, append them
 with new IDs before you begin.
+
+**Then get it reviewed cold (L2 and above).** Hand the diff, the test basis and
+the finished case list to an independent reviewer — a subagent that did not see
+your reasoning — and ask for two things only: missing cases ranked by risk, and
+expectations not anchored in the basis. Merge what survives with new IDs (mark
+them, e.g. `*`, and say in the summary how many came from the review) and
+correct the expectations it rightly challenged. This is mandatory when you wrote
+the change (non-negotiable #6) and the default otherwise: the reviewer's cases
+are where the mind that designed the list was not looking, and on past runs they
+are where the defects were. Skip it only at L1, and say so.
 
 **Reuse and grow the suite.** If `.qa/suites/<feature>.md` already exists from an
 earlier run, don't start from scratch: re-run the existing cases (that's your
