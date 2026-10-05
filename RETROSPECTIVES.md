@@ -762,3 +762,42 @@ again came from the cold reviewer subagent only.
 - The 2026-10-02 P3 (assert through case-attributable records, never a shared
   aggregate) stays OPEN; this run had no recurrence.
 
+## 2026-10-05 · L2 · backend API, alternative input for a scheduling rule, fix mode
+
+**Cases:** 72 (15 from the cold review, 5 discovered during fix verification) ·
+**Result:** 0 FAIL after fixes; 3 S3 found (2 fixed red → green, 1 deferred by the
+user) · **Verdict:** GO WITH RISK.
+
+**What the structure caught:**
+
+- The cold case-list review produced both fixed defects:
+  - an accepted value under which the rule never applied;
+  - a missing upper bound that a sibling input already had.
+- The executors passed every case in the original list. The defects were outside
+  what the mind that wrote the change had thought to test (non-negotiable #6
+  working as designed).
+- The lock-stripping mutant turned a green race harness into evidence: real 0/20,
+  mutant 15/20.
+
+**Cost/noise:**
+
+- One false FAIL. The executor computed a money delta for a partial operation
+  itself, and got it wrong.
+- One harness FAIL caused by module-resolution flags when importing application
+  code into a script. That is project-specific, so it was recorded in the
+  project's environment manifest.
+
+**Things I improvised that should be rules:**
+
+- Checking each accepted extreme against the instant at which the feature acts
+  (→ the Effect oracle).
+
+**Non-negotiable strained:** #6 again. The lead wrote the change, and design
+independence came only from the cold reviewer.
+
+**Proposals:**
+
+- P2 — the Effect oracle, pointed at by the cold review → APPLIED (v1.13.0)
+- P3 — expected deltas written as numbers → APPLIED (v1.13.0)
+- The 2026-10-02 P3 (assert through case-attributable records, never a shared
+  aggregate) stays OPEN; this run had no recurrence.

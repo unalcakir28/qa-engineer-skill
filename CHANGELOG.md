@@ -3,6 +3,25 @@
 Semver. Every approved change is recorded here, along with which run's
 retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.13.0] — 2026-10-05
+
+Motivation: retrospective of the 2026-10-05 L2 run (backend API, a new
+alternative input for a scheduling rule, fix mode on). Both defects attributable
+to the change came from the cold case-list review, not from execution. One was an
+accepted value under which the rule never applied. The other was a missing upper
+bound that a sibling input had. In both, the code did exactly what its author
+meant. One false FAIL came from an executor computing a money delta itself.
+
+### Added
+- `references/oracles.md`: the **Effect** oracle. Every accepted input value must
+  change behaviour. An accepted value that makes the feature a no-op, or freezes
+  state indefinitely, is a defect. A bound present on a sibling input and absent
+  on the new one is a lead.
+- `SKILL.md`, cold review: the reviewer is pointed at inputs that are accepted but
+  have no effect, or have no upper bound.
+- `references/case-list.md`: money, quantity and counter deltas are written as the
+  expected number, never as the rule for computing it.
+
 ## [1.12.0] — 2026-10-05
 
 Motivation: retrospective of the 2026-10-05 L3 run (backend API, a new

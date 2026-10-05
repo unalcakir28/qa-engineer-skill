@@ -1,6 +1,6 @@
 ---
 name: qa-engineer
-version: 1.12.0
+version: 1.13.0
 description: Act as the project's QA engineer before a change ships - risk analysis, a numbered case list designed with real test techniques (boundary values, equivalence classes, decision tables, pairwise), execution across functional, negative, boundary, permission, state, concurrency, data-integrity, resilience and security categories, every finding verified, closing with a severity-ranked report and a GO / NO-GO verdict. Use whenever the user asks to test, verify, validate, QA, break, stress, regression-check or pre-release review a feature, endpoint, screen, CLI command or change - including Turkish phrasings like "test et", "kapsamli test", "kirmaya calis", "QA yap" - and whenever you have just implemented something and are about to verify it. The default depth is a full sweep, not happy-path.
 ---
 
@@ -347,7 +347,10 @@ with new IDs before you begin.
 **Then get it reviewed cold (L2 and above).** Hand the diff, the test basis and
 the finished case list to an independent reviewer — a subagent that did not see
 your reasoning — and ask for two things only: missing cases ranked by risk, and
-expectations not anchored in the basis. Merge what survives with new IDs (mark
+expectations not anchored in the basis. Point it explicitly at inputs the
+validation accepts but which leave the feature with no effect, or with no upper
+bound (the *Effect* oracle in `references/oracles.md`). This defect class passes
+every functional case, because the code does exactly what its author meant. Merge what survives with new IDs (mark
 them, e.g. `*`, and say in the summary how many came from the review) and
 correct the expectations it rightly challenged. This is mandatory when you wrote
 the change (non-negotiable #6) and the default otherwise: the reviewer's cases

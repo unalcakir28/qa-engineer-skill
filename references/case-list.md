@@ -85,6 +85,11 @@ the one thing that makes the whole file worthless.
 - **Expected must be checkable and anchored.** Not "returns an error" but "400 +
   `code=COUPON_EXPIRED`, no order created". If nothing in the requirements or
   schema anchors your expectation, that's an open question, not a case.
+- **Write money, quantity and counter deltas as the expected number**
+  (`balance 1000 → 994`), never as the rule for computing it ("the refunded part
+  goes back"). Leaving the arithmetic to the executor has two failure modes: they
+  get it wrong and report a false FAIL, or they derive the number from what the
+  system returned and certify a wrong result.
 - **Include the verification point**, not just the request: which DB row, which
   log line, which counter you'll look at.
 - **Steps short enough to repeat.** If a case needs 12 steps of setup, the

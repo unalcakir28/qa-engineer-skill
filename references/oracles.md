@@ -33,6 +33,7 @@ wrong" into an argument the developer can act on.
 | **Familiarity** | Does it look like a bug pattern we've seen before? | `.qa/known-issues.md`, classic off-by-one / N+1 / race shapes |
 | **Explainability** | Can I explain why it does this? | if nobody can explain the behaviour, it's a finding even if it might be correct |
 | **World** | Does it make sense against plain reality? | negative quantities, orders shipped before payment, ages of 700, 31 February |
+| **Effect** | Does every value the input accepts actually change behaviour? | for each validation bound, put the accepted extreme next to the moment or threshold where the feature acts. An accepted value under which the feature does nothing (a schedule that fires before anything can be scheduled, a limit no one can reach) is a defect, even when the code does what its author meant. So is a value that freezes state indefinitely. A bound that a sibling input has and the new input lacks (a maximum count with no matching maximum date) points to one |
 
 Two more that are mechanical and worth automating:
 
