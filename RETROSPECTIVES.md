@@ -721,3 +721,44 @@ came only from the reviewer subagent, which is why it is now the default.
 - **P3 — OPEN:** a harness note in `test-data.md` — with parallel executors,
   assert through records attributable to the case, never through a shared
   aggregate, and wait for the downstream effect before counting it.
+
+## 2026-10-05 · L3 · backend API, per-entity attribute written on the load path (fix mode on)
+
+**What the structure caught:**
+
+- **A/B found a regression no response showed.** A new write path moved a
+  persistence-stamped "updated at" column that reports sort and filter on. Only
+  reading the stored row back on both builds revealed it.
+- **A real-database race harness with a deliberate mutant** (last writer wins)
+  proved it could go red before its green was trusted, and found a lost-update
+  defect the doubles-based suite could not see.
+- **Mutation testing on the new pure modules** left three survivors, all at
+  exact-instant boundaries (`<` vs `<=`); the tests added for them brought the
+  score to 100 %.
+- **The cold reviewer** added 22 cases and corrected 14 expectations.
+
+**Cost/noise:**
+
+- Two false FAILs from expectations copied from REST convention (a dedicated
+  not-found status) in a project whose error layer answers every business error
+  with one generic client-error status.
+- A long-running tool started from a foreground background-subshell died with
+  the call; it had to be re-run as a tracked background task.
+
+**Things I improvised that should be rules:**
+
+- Read persistence-maintained columns back on both A/B builds (→ v1.12.0).
+- Run a hand-written query binding a time value under several DB session time
+  zones (→ v1.12.0).
+
+**Non-negotiable strained:** #6 — the lead wrote the change; design independence
+again came from the cold reviewer subagent only.
+
+**Proposals:**
+
+- P2 — persistence-maintained columns in the A/B diff → APPLIED (v1.12.0)
+- P2 — project conventions outrank textbook expectations → APPLIED (v1.12.0)
+- P3 — session time zone sweep for hand-written time queries → APPLIED (v1.12.0)
+- The 2026-10-02 P3 (assert through case-attributable records, never a shared
+  aggregate) stays OPEN; this run had no recurrence.
+

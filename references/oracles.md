@@ -41,6 +41,13 @@ Two more that are mechanical and worth automating:
   the export.
 - **Consistency across time**: run the same operation twice; an idempotent action
   must not change state the second time.
+- **The project's own conventions over textbook ones**: before writing an
+  expected status code, error shape or empty-result form, check how the project's
+  error layer and its sibling endpoints already answer the same situation (a
+  "not found" that every endpoint returns as a generic client error, not as a
+  dedicated status). An expectation copied from a style guide the project never
+  adopted produces false FAILs. A deviation from the project's own convention is
+  the finding; a deviation from the textbook is at most an open question.
 
 ## Metamorphic relations — an oracle when you can't know the exact answer
 

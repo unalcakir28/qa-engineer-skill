@@ -3,6 +3,27 @@
 Semver. Every approved change is recorded here, along with which run's
 retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.12.0] — 2026-10-05
+
+Motivation: retrospective of the 2026-10-05 L3 run (backend API, a new
+per-entity attribute written on the reward load path, fix mode on). The A/B
+differential found a regression no response showed: a new write path moved a
+column the persistence layer stamps on its own, which reports sort and filter
+on. A hand-written query bound a time value whose meaning depended on the
+database session's time zone. Two expectations copied from REST convention
+produced false FAILs.
+
+### Added
+
+- `techniques.md` §11: in an A/B run, read back persistence-maintained columns
+  (auto-stamped update times, version counters, trigger fields) on both builds,
+  not only the responses.
+- `oracles.md`: the project's own error and response conventions outrank
+  textbook ones when writing an expectation; a deviation from the textbook alone
+  is an open question, not a FAIL.
+- `edge-data.md`: run a hand-written query that binds a time value under two or
+  more database session time zones.
+
 ## [1.11.0] — 2026-10-02
 
 Motivation: retrospective of the 2026-10-02 L2 run (backend API, idempotency

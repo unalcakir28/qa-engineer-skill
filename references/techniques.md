@@ -184,6 +184,11 @@ What it buys, in order of value:
   of surfaces the change was not supposed to touch (public contract output,
   reports and exports, error bodies, downstream feeds) is a far stronger claim
   than "I looked and it seemed the same".
+  Include what no response shows: read back the columns the persistence layer
+  maintains on its own — auto-stamped "updated at" times, version counters,
+  trigger-maintained fields — on both builds. A new write path that touches
+  them changes every report, sort and filter built on them, and no response
+  diff will reveal it.
 - **A red-green proof for the change itself.** The baseline *is* the pre-fix
   code, so the probe that fails there and passes here satisfies non-negotiable
   #3 without writing a throwaway test first.
