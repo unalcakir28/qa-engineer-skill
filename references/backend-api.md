@@ -17,6 +17,9 @@ every endpoint — but each line you skip should be skipped knowingly.
   `Authorization`, malformed bearer token, huge header, unexpected charset.
 - Compatibility: existing clients still work — no removed field, no renamed key,
   no narrowed type, no newly-required request field.
+- Generated clients: if an SDK is generated from the contract, a new optional
+  parameter inserted ahead of existing ones shifts positional calls. Check the
+  parameter order the contract emits, not only that the change is additive.
 
 ## Input validation
 

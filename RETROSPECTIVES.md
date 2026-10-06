@@ -801,3 +801,41 @@ independence came only from the cold reviewer.
 - P3 — expected deltas written as numbers → APPLIED (v1.13.0)
 - The 2026-10-02 P3 (assert through case-attributable records, never a shared
   aggregate) stays OPEN; this run had no recurrence.
+
+## 2026-10-06 · L3 · backend API, read-only aggregation endpoint + new list filters, fix mode
+
+**Cases:** 111 (12 from the cold review) · **Result:** 2 findings attributable to
+the change (S2, S4), both fixed red → green; 5 pre-existing left open by the user ·
+**Verdict:** GO WITH RISK.
+
+**What the structure caught:**
+
+- The cold review again produced every defect attributable to the change: new
+  parameters inserted ahead of existing ones in a contract consumed through a
+  positional generated client, and a row shape listed by one view but dropped by
+  the aggregate built on the same predicate.
+- A/B against the pre-change build turned three candidate findings into measured
+  pre-existing ones in minutes.
+- A deliberately broken variant (independent reads instead of one) proved the
+  consistency harness could go red (mutant 23/25, real 0/25).
+
+**Cost/noise:**
+
+- One false finding from the QA bootstrap (5xx on a malformed credential that the
+  real build rejects with 401).
+- One executor script compared items of different shapes.
+
+**Things I improvised that should be rules:**
+
+- Starting a non-bootstrapped build to re-check an auth probe.
+- Reading the contract's parameter order as the generated client sees it.
+
+**Non-negotiable strained:** #6 — the lead wrote the change and missed both
+attributable defects; design independence came only from the cold reviewer.
+
+**Proposals:**
+
+- P1 — generated-client compatibility in the contract diff → APPLIED (v1.14.0)
+- P2 — bootstrap-altered paths need a non-bootstrapped repro → APPLIED (v1.14.0)
+- The 2026-10-02 P3 (assert through case-attributable records) stays OPEN; no
+  recurrence this run.

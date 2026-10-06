@@ -1,6 +1,6 @@
 ---
 name: qa-engineer
-version: 1.13.0
+version: 1.14.0
 description: Act as the project's QA engineer before a change ships - risk analysis, a numbered case list designed with real test techniques (boundary values, equivalence classes, decision tables, pairwise), execution across functional, negative, boundary, permission, state, concurrency, data-integrity, resilience and security categories, every finding verified, closing with a severity-ranked report and a GO / NO-GO verdict. Use whenever the user asks to test, verify, validate, QA, break, stress, regression-check or pre-release review a feature, endpoint, screen, CLI command or change - including Turkish phrasings like "test et", "kapsamli test", "kirmaya calis", "QA yap" - and whenever you have just implemented something and are about to verify it. The default depth is a full sweep, not happy-path.
 ---
 
@@ -277,6 +277,10 @@ Then write down explicitly:
   an unsigned token with a chosen identity) is an acceptable fallback, provided
   guards, permissions and data stay real, the report says exactly which check was
   skipped, and validation with a real credential is listed as `BLOCKED`.
+  A defect seen on a path the bootstrap altered — a 5xx for a malformed or
+  tampered credential when the credential check is the thing bypassed — is not a
+  finding until it reproduces on a build without the bootstrap: the bypass, not
+  the product, is the first suspect.
 - **The contract diff.** If the project exposes a public contract (OpenAPI spec,
   GraphQL/proto schema, exported client types, published event payloads), keep a
   snapshot under `.qa/contracts/` and diff the current contract against it at
@@ -285,6 +289,14 @@ Then write down explicitly:
   a tier A case and a candidate finding ("breaking change: intentional?"), because
   the consumers of a contract are exactly the users who can't see the diff.
   Refresh the snapshot in Phase 6 once the verdict lands, never before.
+  **Additive on the wire is not additive for a generated client.** When consumers
+  use an SDK generated from the contract, judge the change by what the generator
+  derives from it, not by the wire format: the order of parameters (generators
+  that take optional parameters positionally shift every existing call when a new
+  one is inserted ahead of them — silently, if the types line up), method names
+  derived from operation identifiers, and the names given to new enums or unions.
+  A new optional input goes after the existing ones; make that a tier A case
+  whenever a parameter is added to an operation an SDK exposes.
 
 ### Scope tiers — "test everything" made feasible
 
@@ -527,7 +539,8 @@ at L1 for S1/S2 findings, at L2 and L3 for all of them. Try to **refute** it:
 - Re-run it clean, from a fresh state, and confirm it reproduces. Once is an
   anecdote.
 - Ask what else could explain it: stale build, bad test data, my own wrong
-  request, a misread requirement, an env-only quirk, a pre-existing bug unrelated
+  request, a misread requirement, an env-only quirk, a harness bypass on the
+  path (a QA bootstrap that disables a check), a pre-existing bug unrelated
   to this change (still a finding — but labelled as pre-existing).
 - **"Pre-existing" is a measurement, not a hunch.** That label decides whether
   the finding blocks the release (`references/release-gate.md`), so it needs the

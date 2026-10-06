@@ -3,6 +3,27 @@
 Semver. Every approved change is recorded here, along with which run's
 retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.14.0] — 2026-10-06
+
+Motivation: retrospective of the 2026-10-06 L3 run (backend API, a new read-only
+aggregation endpoint plus new filters on an existing list, fix mode on). The most
+serious defect attributable to the change was additive on the wire but would have
+silently shifted existing calls in the client generated from the contract; the
+contract diff had classified it as "additions only". One false finding came from
+a QA bootstrap: with the credential check bypassed, a malformed credential reached
+code the real build never lets it reach and produced a 5xx.
+
+### Added
+- `SKILL.md`, contract diff: additive on the wire is not additive for a generated
+  client — check parameter order, derived method names and new enum/union names;
+  a new optional input goes after the existing ones.
+- `SKILL.md`, access playbook: a defect on a path the bootstrap altered is not a
+  finding until it reproduces on a build without the bootstrap.
+- `SKILL.md`, Phase 3: a harness bypass on the path is listed among the
+  alternative explanations.
+- `references/backend-api.md`: generated-client parameter order under
+  Compatibility.
+
 ## [1.13.0] — 2026-10-05
 
 Motivation: retrospective of the 2026-10-05 L2 run (backend API, a new
