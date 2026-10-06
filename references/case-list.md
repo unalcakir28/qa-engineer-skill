@@ -82,6 +82,17 @@ the one thing that makes the whole file worthless.
 - **Concrete data, not descriptions.** `SAVE10`, `₺100`, `1,000 characters` — not
   "an invalid value". Someone else (or you, next month) must be able to re-run it
   without re-deriving the inputs.
+- **Exception: security probes are written as intent.** Examples: "stored-script
+  probe in the display-name field, rendered on the public page" or "SQL
+  metacharacters in the search parameter". Name the target field, the sink and
+  the expected safe behaviour. Do not write the attack string itself. The
+  executor takes the concrete strings from `edge-data.md` and
+  `backend-api.md`, and records the exact string used in the evidence file.
+  Reasons:
+  - A case file full of live exploit strings can be refused by the tooling that
+    writes it, which stalls Phase 1.
+  - An intent row stays valid when the payload list improves.
+  - The evidence file still keeps the run reproducible.
 - **Expected must be checkable and anchored.** Not "returns an error" but "400 +
   `code=COUPON_EXPIRED`, no order created". If nothing in the requirements or
   schema anchors your expectation, that's an open question, not a case.

@@ -146,6 +146,20 @@ credentials live.
 | staging | https://staging.example.com | no | test users: secret manager `qa/staging` |
 | prod | — | **YES — never tested** | only Phase 6.5 read-only smoke, on request |
 
+## Deployed revision
+<!-- Which branch/commit each environment serves and how to read it (version
+     endpoint, about page, header, deploy log). Re-read it at every phase boundary. -->
+| Environment | Serves branch | How to read the revision |
+|-------|--------|----------|
+| staging | <branch> | <GET /version · about page · response header> |
+
+## Single-instance resources (lanes)
+<!-- Resources that cannot be cloned per executor; each gets one lane, run serially.
+     Executors never log out, revoke, demote, ban or delete these. -->
+| Resource | Lane | Who restores it if lost |
+|-------|--------|----------|
+| <session a human signed into> | <lane name> | <the user, by signing in again> |
+
 ## Access and authentication (test playbook)
 <!-- Per surface: which method guards it + HOW to obtain the credential (script/seed/
      env name/vault path). The secret itself is NEVER written here. -->

@@ -3,6 +3,31 @@
 Semver. Every approved change is recorded here, along with which run's
 retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.15.0] — 2026-10-06
+
+Motivation: retrospective of the 2026-10-06 L3 run (web app plus backend API,
+full-app regression on a shared deployed environment, report-only). The first
+basis was read from the local checkout, which was on a different branch than the
+deployed one. The environment was redeployed mid-run, and that was noticed only by
+chance. One executor logged out a session that only the user could restore, and
+about 90 case rows had no executor. The tooling twice refused to write a case
+file that contained concrete attack strings.
+
+### Added
+- `SKILL.md`, Phase 0: establish the revision the target runs, and read the basis
+  from that revision rather than from the local checkout.
+- `SKILL.md`, Phase 2: re-read the target revision at every phase boundary. On a
+  redeploy, re-run the candidates on the new revision. Phase 3 lists a redeploy
+  among the alternative explanations.
+- `references/run-modes.md`: lanes for single-instance resources. Each case gets
+  a lane tag at design time, unowned rows are counted before dispatch, and
+  executors never end or degrade a shared session or account.
+- `references/case-list.md`: security probes are written as intent. Executors
+  take the concrete strings from the reference files and record them in the
+  evidence.
+- `references/qa-memory.md`: the manifest template gains "Deployed revision" and
+  "Single-instance resources (lanes)" sections.
+
 ## [1.14.0] — 2026-10-06
 
 Motivation: retrospective of the 2026-10-06 L3 run (backend API, a new read-only

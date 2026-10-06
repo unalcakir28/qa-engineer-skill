@@ -1,6 +1,6 @@
 ---
 name: qa-engineer
-version: 1.14.0
+version: 1.15.0
 description: Act as the project's QA engineer before a change ships - risk analysis, a numbered case list designed with real test techniques (boundary values, equivalence classes, decision tables, pairwise), execution across functional, negative, boundary, permission, state, concurrency, data-integrity, resilience and security categories, every finding verified, closing with a severity-ranked report and a GO / NO-GO verdict. Use whenever the user asks to test, verify, validate, QA, break, stress, regression-check or pre-release review a feature, endpoint, screen, CLI command or change - including Turkish phrasings like "test et", "kapsamli test", "kirmaya calis", "QA yap" - and whenever you have just implemented something and are about to verify it. The default depth is a full sweep, not happy-path.
 ---
 
@@ -188,6 +188,13 @@ feature promises and what it touches.
   caches it, what runs it on a schedule.
 - Existing tests: what they already cover (don't re-report what a passing test
   already guards) and — more interesting — what they conspicuously don't.
+- **The revision the target actually runs.** When the target is a deployed
+  environment, find out which branch and commit it serves: a version endpoint,
+  an about page, a build tag, a response header, the deploy log. Then read the
+  diff, contract and basis from that revision, not from whatever the local
+  checkout happens to be on. A basis read from the wrong branch produces
+  confident expectations about code that is not running. If the revision cannot
+  be established, say so in the report header.
 
 Then write down explicitly:
 
@@ -450,6 +457,11 @@ You are no longer designing, you are executing. Walk the case list in ID order
 and let the file be the single source of truth — that's what keeps you from
 working blind or losing your place halfway.
 
+- **Re-read the target's revision at every phase boundary**: before execution,
+  before verification and before the report. A shared environment can be
+  redeployed under a running test. When the revision changed, record the time
+  and both revisions. Re-run every candidate finding on the new revision. A
+  candidate the redeploy fixed is refuted, not reported.
 - **Update the file as you go**, case by case: status + evidence on each row, not
   a batch write at the end. If the run is interrupted, the file shows exactly
   where it stopped and what's left.
@@ -520,7 +532,8 @@ working blind or losing your place halfway.
 A 60-case list executed in one context degrades near the end — attention drifts
 to wrapping up. At **L3**, and on any L2 run that grew past ~40 cases, split
 execution by category group across Sonnet subagents. The group split, the
-fixture-isolation rule, the two rules that keep a parallel run honest (raw
+fixture-isolation rule, lanes for resources that exist only once (a session a
+human signed into, a single device), the rules that keep a parallel run honest (raw
 evidence per case; a subagent's PASS is a claim, sample-verify it) and when the
 lead may execute a scripted list itself instead are in `references/run-modes.md`
 — read it before delegating.
@@ -538,7 +551,7 @@ at L1 for S1/S2 findings, at L2 and L3 for all of them. Try to **refute** it:
 
 - Re-run it clean, from a fresh state, and confirm it reproduces. Once is an
   anecdote.
-- Ask what else could explain it: stale build, bad test data, my own wrong
+- Ask what else could explain it: stale build, a redeploy since the case ran, bad test data, my own wrong
   request, a misread requirement, an env-only quirk, a harness bypass on the
   path (a QA bootstrap that disables a check), a pre-existing bug unrelated
   to this change (still a finding — but labelled as pre-existing).

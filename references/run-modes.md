@@ -57,6 +57,22 @@ raw evidence) rather than walked by hand, so context does not degrade towards
 the end of the list. Say so in the report and in the metrics row, with the reason
 ("execution by the lead: shared fixture could not be isolated per group").
 
+**Lanes for single-instance resources — planned at design time.** Some
+resources cannot be cloned per agent: a session a human signed into by hand, the
+one physical device, an account only a person can create. Every case that needs
+one runs in that resource's **lane**, and each lane has exactly one executor at a
+time.
+
+- List these resources in the environment manifest.
+- Give every case row a lane tag in Phase 1, not at dispatch.
+- Before dispatching, count the rows that no executor owns. A row without an
+  owner is not run by anyone, and it looks exactly like a row someone forgot to
+  report. Each such row is run by the lead or marked `NOT RUN` with the reason.
+- Every executor brief forbids actions that end or degrade a shared session or
+  account: logging out, revoking a token, changing its role, banning or deleting
+  it. Cases that need such an action are scheduled last in their lane, and the
+  lead runs them.
+
 Three rules that keep a parallel run honest:
 
 - **Each agent seeds its own isolated fixture set** (own org/tenant/user/records,

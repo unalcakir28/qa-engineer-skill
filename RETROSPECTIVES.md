@@ -839,3 +839,42 @@ attributable defects; design independence came only from the cold reviewer.
 - P2 — bootstrap-altered paths need a non-bootstrapped repro → APPLIED (v1.14.0)
 - The 2026-10-02 P3 (assert through case-attributable records) stays OPEN; no
   recurrence this run.
+
+## 2026-10-06 · L3 · web app + backend API, full-app regression on a shared deployed environment (report-only)
+
+**Cases:** 532 across 7 suites · **Result:** 96 verified findings (0 × S1,
+14 × S2, 48 × S3, 34 × S4), all S2 likely pre-existing by code presence; no
+baseline run was possible · **Verdict:** GO WITH RISK (provisional).
+
+**What the structure caught:**
+
+- Cold reviews and adversarial verification removed 18 candidates. Four of them
+  had been fixed by a mid-run redeploy.
+- Lead-run concurrency probes against the real store measured lock contention
+  red-green.
+
+**Cost/noise:**
+
+- The basis was first read from the local checkout, which was on another branch
+  than the deployed one, and had to be redone from a snapshot of the deployed
+  branch.
+- An executor logged out a session that only the user could restore.
+- About 90 case rows had no executor and were found only at merge time.
+- The tooling twice refused to write a case file that contained concrete attack
+  strings.
+
+**Things I improvised that should be rules:**
+
+- Exporting a source snapshot of the deployed branch.
+- Re-reading the version before verification.
+- A "never log out" rule in the executor brief.
+
+**Proposals:**
+
+- P1: read the basis from the revision the target runs → APPLIED (v1.15.0)
+- P2: re-read the target revision at phase boundaries → APPLIED (v1.15.0)
+- P1: lanes for single-instance resources, plus an unowned-row count before
+  dispatch → APPLIED (v1.15.0)
+- P2: security probes written as intent in case files → APPLIED (v1.15.0)
+- The earlier P3 proposals (a "safe to call" manifest column, case-attributable
+  asserts) stay OPEN. There was no recurrence this run.
