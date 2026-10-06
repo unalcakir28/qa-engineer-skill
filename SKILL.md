@@ -1,6 +1,6 @@
 ---
 name: qa-engineer
-version: 1.15.0
+version: 1.16.0
 description: Act as the project's QA engineer before a change ships - risk analysis, a numbered case list designed with real test techniques (boundary values, equivalence classes, decision tables, pairwise), execution across functional, negative, boundary, permission, state, concurrency, data-integrity, resilience and security categories, every finding verified, closing with a severity-ranked report and a GO / NO-GO verdict. Use whenever the user asks to test, verify, validate, QA, break, stress, regression-check or pre-release review a feature, endpoint, screen, CLI command or change - including Turkish phrasings like "test et", "kapsamli test", "kirmaya calis", "QA yap" - and whenever you have just implemented something and are about to verify it. The default depth is a full sweep, not happy-path.
 ---
 
@@ -579,6 +579,14 @@ at L1 for S1/S2 findings, at L2 and L3 for all of them. Try to **refute** it:
   once the rounds where the change had simply arrived last were separated out, the
   real number was 3 out of 30 — same defect, one tenth the claim.
 - Reduce to the minimal reproduction and capture the exact evidence.
+- **An artefact you eliminate is fixed where it lives, in the same run.** When a
+  FAIL turns out to be the harness — a script comparing the wrong things, a broken
+  query, a snapshot that includes a column some unrelated guard touches — correct
+  the script, or if that is not possible annotate the case row with the artefact
+  and the manual check that replaces it. Otherwise every later re-run of the same
+  script re-surfaces the same FAIL and someone diagnoses it again from scratch;
+  one follow-up run re-diagnosed two artefacts that the previous run had already
+  eliminated, because only the report remembered them.
 
 Anything that survives becomes a finding with `verified: yes`. Anything that
 doesn't either drops or moves to Risks with the reasoning shown. Never inflate

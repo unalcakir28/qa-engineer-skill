@@ -878,3 +878,33 @@ baseline run was possible · **Verdict:** GO WITH RISK (provisional).
 - P2: security probes written as intent in case files → APPLIED (v1.15.0)
 - The earlier P3 proposals (a "safe to call" manifest column, case-attributable
   asserts) stay OPEN. There was no recurrence this run.
+
+## 2026-10-06 · Focused · backend API, product decision on a read-only aggregation endpoint (fix mode)
+
+**Cases:** 29 new + re-run of every earlier script · **Result:** 1 verified
+finding attributable to the change (S4, fixed red → green); 2 pre-existing
+findings widened · **Verdict:** GO WITH RISK (one product question, answered
+after the report and implemented).
+
+**What the structure caught:**
+
+- The cold review again found the only defect attributable to the change: a
+  filter applied per key before an aggregation did not hold after summing.
+- The cold review also corrected the lead's own regression expectation, which
+  undercounted the cases the decision changed.
+- A mutant that keeps the filtered items made the concurrency harness go red
+  (24/25) against the real store.
+
+**Cost/noise:**
+
+- Two FAILs from the previous run's harness artefacts came back on re-run and
+  were diagnosed a second time.
+- The QA app was assumed killed by a build step; it was not, and one re-run hit
+  the stale process before the port owner was checked.
+
+**Proposals:**
+
+- P2: fix or annotate an eliminated artefact in the same run → APPLIED (v1.16.0)
+- P3: check which process owns the port (and its start time) before a re-run
+  after a rebuild → OPEN (project manifest note for now)
+

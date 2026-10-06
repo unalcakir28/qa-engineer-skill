@@ -3,6 +3,19 @@
 Semver. Every approved change is recorded here, along with which run's
 retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.16.0] — 2026-10-06
+
+Motivation: retrospective of the 2026-10-06 Focused follow-up run (backend API,
+a product decision added to a read-only aggregation endpoint, fix mode). The
+regression re-run of the earlier scripts re-surfaced two FAILs that the previous
+run had already eliminated as harness artefacts; only its report remembered them,
+so both were diagnosed again.
+
+### Added
+- `SKILL.md`, Phase 3: an artefact eliminated in verification is fixed in the
+  script, or annotated on the case row with its manual replacement check, in the
+  same run.
+
 ## [1.15.0] — 2026-10-06
 
 Motivation: retrospective of the 2026-10-06 L3 run (web app plus backend API,
