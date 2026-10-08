@@ -906,5 +906,47 @@ after the report and implemented).
 
 - P2: fix or annotate an eliminated artefact in the same run → APPLIED (v1.16.0)
 - P3: check which process owns the port (and its start time) before a re-run
-  after a rebuild → OPEN (project manifest note for now)
+  after a rebuild → APPLIED (v1.17.0, after it recurred on 2026-10-07)
 
+
+## 2026-10-07 · L3 · backend API, money escrow + queue pipeline + cron (fix mode)
+
+**Cases:** 137 (20 from the cold review, 13 expectations corrected by it) ·
+**Result:** 5 verified defects attributable to the change (4 fixed red → green,
+1 open S4), 5 pre-existing (1 found while verifying a fix, 4 by the rotation) ·
+**Verdict:** GO WITH RISK.
+
+**What the structure caught:**
+
+- The cold review again produced every defect attributable to the change; the
+  lead, who wrote the change, had none of them in the first list. It also
+  rewrote two concurrency expectations that would otherwise have reported the
+  lock's designed rejections as failures.
+- Real-dependency concurrency with one mutant per guard: every green result had
+  a red twin, and the mutants showed which guard actually held (a unique
+  constraint, not the status check, stopped a double settlement).
+- Verifying one validation fix by hand exposed the same library defect in a
+  shared decorator used by every money field.
+
+**Cost/noise:**
+
+- One executor's mutant widened a query that runs over the whole shared store
+  (a scheduled sweep) and changed other executors' rows; their results had to be
+  re-checked against a time window.
+- A hand-rolled A/B token without the profile claims the identity guard needs
+  made every call fail on both builds — caught only because both builds failed
+  identically.
+- One executor stalled on a long sequence of real cron waits and had to be
+  resumed for its summary.
+
+**Proposals:**
+
+- P1: a mutant may only act on the executor's own fixtures; a mutant that changes
+  a component which scans or schedules over shared state (a sweep, a poller, a
+  queue consumer) runs only when no other executor is active, or in an isolated
+  store. → APPLIED (v1.17.0)
+- P3: tell executors that wait on real scheduler ticks to write a status line per
+  case as they go, so a stalled executor can be resumed cheaply. → APPLIED (v1.17.0)
+- P3 (from 2026-10-06, check which process owns the port before a re-run): recurred
+  this run (a stale QA app from the previous day held the port) — per the backlog
+  rule, a recurring proposal is prima facie P1 → raise to P2 → APPLIED (v1.17.0)

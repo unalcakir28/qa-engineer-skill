@@ -3,6 +3,26 @@
 Semver. Every approved change is recorded here, along with which run's
 retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.17.0] — 2026-10-08
+
+Motivation: retrospective of the 2026-10-07 L3 run (backend API, money escrow +
+queue pipeline + scheduled sweep, fix mode). One executor's mutant changed a
+component that scans the whole shared store and rewrote other executors'
+records; another executor stalled after long real-time waits and had to be
+resumed for its summary; and, for the second run in a row, a stale instance
+from an earlier day was serving the target port.
+
+### Added
+- `references/run-modes.md`, parallel-run rules: a mutant touches only its
+  executor's own fixtures — a mutant of a component that scans or schedules over
+  shared state is scoped to the executor's ids, run alone, or run against an
+  isolated store (P1).
+- `references/run-modes.md`, parallel-run rules: an executor that waits on real
+  time writes each case's status and evidence as it finishes it (P3).
+- `SKILL.md`, Phase 2: check which process serves the target, and since when, at
+  the start of the run and before every re-run after a rebuild (P3 of
+  2026-10-06, recurred → P2).
+
 ## [1.16.0] — 2026-10-06
 
 Motivation: retrospective of the 2026-10-06 Focused follow-up run (backend API,

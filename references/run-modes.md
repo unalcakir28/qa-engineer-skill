@@ -73,7 +73,7 @@ time.
   it. Cases that need such an action are scheduled last in their lane, and the
   lead runs them.
 
-Three rules that keep a parallel run honest:
+Five rules that keep a parallel run honest:
 
 - **Each agent seeds its own isolated fixture set** (own org/tenant/user/records,
   prefixed identifiers). Parallel agents must never share mutable test data — one
@@ -81,6 +81,17 @@ Three rules that keep a parallel run honest:
   the resulting FAILs look exactly like real bugs. If a group *must* mutate
   shared or global state (DDL, config, a shared counter), run that group alone,
   not in parallel.
+- **A mutant touches only its executor's own fixtures.** A deliberately broken
+  copy of a guard runs inside the executor's own process, but what it writes lands
+  in the shared store. If the mutated component scans or schedules over shared
+  state — a periodic sweep, a poller, a queue consumer — scope the mutant to the
+  executor's own record ids, or run it when no other executor is active, or
+  against an isolated store. Otherwise it rewrites other agents' records, and
+  every result that touched them has to be re-checked against a time window.
+- **An executor that waits on real time records as it goes.** Cases that wait for
+  scheduler ticks or timeouts make an agent run long, and a long agent can stall.
+  Each case's status and evidence are written the moment the case finishes, so a
+  stalled executor can be resumed for its summary without re-running anything.
 - **Raw evidence is part of the contract.** Require each agent to return, per
   case, the actual request and response (or command and output) — not a
   paraphrase. Without the raw exchange you cannot tell a real FAIL from the
