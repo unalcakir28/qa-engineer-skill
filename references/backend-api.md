@@ -111,6 +111,12 @@ every endpoint — but each line you skip should be skipped knowingly.
   1, max, max+1, huge.
 - Stable ordering — the same item must not appear on two pages; check paging
   while data is being inserted.
+- Incremental pulls by timestamp (a consumer fetching "since the last pull, up
+  to now"): a row's timestamp is set at insert, but other readers see it only at
+  commit. Hold a lock the writer needs after its insert, so its transaction
+  stays open. Pull a window that covers the row's timestamp, release the lock,
+  then pull the next window. If the row is in neither window, the contract must
+  close the gap (a commit-ordered sequence, a lag, a watermark) or document it.
 - Filters combined, filters conflicting, unknown filter param, empty result,
   exactly-one result, filter injection into the ORDER BY / raw SQL.
 - Search: partial match, case, accents and Turkish characters, special

@@ -3,6 +3,20 @@
 Semver. Every approved change is recorded here, along with which run's
 retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.18.0] — 2026-10-12
+
+Motivation: retrospective of the 2026-10-09 L3 run (backend API, a new read feed
+for a downstream system that pulls it incrementally, fix mode). A row was
+stamped inside a pulled window but committed after the pull, so it was in
+neither window. The cold review found it with an improvised lock-holding
+harness; the reference catalogue had no case for it.
+
+### Added
+- `references/backend-api.md`, lists and pagination: a case for incremental
+  pulls by timestamp — hold a lock the writer needs after its insert, pull
+  across the row's timestamp, release, pull again, and require the contract to
+  close or document the gap (P2).
+
 ## [1.17.0] — 2026-10-08
 
 Motivation: retrospective of the 2026-10-07 L3 run (backend API, money escrow +

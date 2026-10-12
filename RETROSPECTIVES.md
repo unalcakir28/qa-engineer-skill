@@ -950,3 +950,33 @@ after the report and implemented).
 - P3 (from 2026-10-06, check which process owns the port before a re-run): recurred
   this run (a stale QA app from the previous day held the port) — per the backlog
   rule, a recurring proposal is prima facie P1 → raise to P2 → APPLIED (v1.17.0)
+
+## 2026-10-09 · L3 · backend API, new read feed for a downstream system (fix mode)
+
+**Cases:** 105 (9 from the cold review) · **Result:** 10 verified defects
+attributable to the change (7 fixed, 3 accepted by the user), 1 pre-existing
+from the rotation (open, separate ticket) · **Verdict:** GO WITH RISK.
+
+**What the structure caught:**
+
+- For the fifth run in a row, every defect attributable to the change came from
+  the cold review: its cases or its tightened expectations. The lead, who wrote
+  the change, designed none of them.
+- A lock-holding harness against the real database made "stamped before
+  commit" observable: a row stamped inside a pulled window was invisible to that
+  pull and outside the next one.
+
+**Cost/noise:**
+
+- Two harness FAILs (a field not selected, an over-broad text match on a raw
+  body) and one harness slip (an old-client code generation wrote into the
+  wrong directory). No false alarm survived verification.
+- Global-count oracles needed a fixed upper time bound, taken before any
+  executor started, to stay stable while executors wrote rows.
+
+**Proposals:**
+
+- P2: when the change adds a read feed that a consumer pulls incrementally, add
+  a case that holds a lock on a row the writer needs after its insert, and check
+  whether a row stamped inside a pulled window can stay invisible to it.
+  → APPLIED (v1.18.0)
