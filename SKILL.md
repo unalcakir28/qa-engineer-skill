@@ -1,6 +1,6 @@
 ---
 name: qa-engineer
-version: 1.18.0
+version: 1.19.0
 description: Act as the project's QA engineer before a change ships - risk analysis, a numbered case list designed with real test techniques (boundary values, equivalence classes, decision tables, pairwise), execution across functional, negative, boundary, permission, state, concurrency, data-integrity, resilience and security categories, every finding verified, closing with a severity-ranked report and a GO / NO-GO verdict. Use whenever the user asks to test, verify, validate, QA, break, stress, regression-check or pre-release review a feature, endpoint, screen, CLI command or change - including Turkish phrasings like "test et", "kapsamli test", "kirmaya calis", "QA yap" - and whenever you have just implemented something and are about to verify it. The default depth is a full sweep, not happy-path.
 ---
 
@@ -22,7 +22,10 @@ run: it produced no information and it spent the user's trust.
 
 **Language:** write the report, findings and QA memory files in English, regardless
 of the language the user is speaking in conversation. Keep code, identifiers and
-log excerpts as-is.
+log excerpts as-is. Text filed into the team's own tracker (issues, comments,
+review threads) is the exception: it follows the language the team works in
+there. Ask once at kickoff, record the answer in the environment manifest, and
+never guess from the conversation language.
 
 **Not your job:** how to start the project, seed the database, or reach the
 environment. The user tells you that, or the session already knows. Never invent
@@ -159,13 +162,17 @@ not execute is `NOT RUN`, never a guessed verdict.
 
 ### Run modes beyond the default
 
-Two variants of the same process, not separate processes — every rule above
-still applies. Read `references/run-modes.md` when either fits:
+Three variants of the same process, not separate processes — every rule above
+still applies. Read `references/run-modes.md` when one fits:
 
 - **PR mode** — the user points you at a pull request (e.g. "test this PR"): tier A
   is the diff, plus a condensed PR-comment version of the report.
 - **Sentinel mode** — the skill is wired to a scheduler and nobody is there to
   answer: L2, report-only, nothing outward-facing.
+- **Fix-verification mode** — someone else fixed issues that were filed earlier
+  and asks you to confirm them: re-run each issue against its own expected
+  behaviour, give a FIXED / PARTIAL / BLOCKED verdict, and update the tracker
+  issue by issue.
 
 ---
 
@@ -501,6 +508,19 @@ working blind or losing your place halfway.
   earlier scenarios touched shared data, re-seed instead of trusting leftover
   state. Patterns — prefix schemes, per-agent isolation, cleanup strategies,
   synthetic-value validity: `references/test-data.md`.
+- **Check who you are before every write.** When a case writes through a
+  session, a browser or a credential that the tooling can rename, reconnect or
+  reassign, read the signed-in identity right before each write and compare it
+  with the identity the case expects. Checking once at the start of the session
+  is not enough: a reconnect can hand the same handle to another account, and
+  the write lands there. Executors never select or switch the lane's session
+  themselves.
+- **Know the way back before a destructive write.** Before a case overwrites or
+  deletes something on a shared or human-owned fixture, take a snapshot of the
+  original and confirm it can be retrieved. If it cannot, the case uses a
+  throwaway fixture or stays `NOT RUN` with the reason. A later or deferred pass
+  inherits every "not restorable" skip of the earlier pass and never re-opens it
+  on its own.
 - **On an unexpected cluster of FAILs, suspect your own harness first.** Several
   cases failing at once with the same shape usually means the test setup is
   wrong, not the code: a synthetic value that fails validation, a stale token, a

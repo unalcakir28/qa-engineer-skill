@@ -1037,32 +1037,32 @@ finding left at the end.
 concurrency claim needed the user's approval before the green could be
 measured. Asking first worked, and nothing was faked.
 
-**Proposals (PROPOSAL — awaiting approval):**
+**Proposals:**
 
 - P1: in a lane whose handle the tooling can rename or reassign (reconnects,
   profile switches), check the signed-in identity before every write, not once
   per session. Also forbid executors to select or switch the lane themselves. →
-  SKILL.md Phase 2 + run-modes.md (MINOR)
+  SKILL.md Phase 2 + run-modes.md (MINOR) → APPLIED (v1.19.0)
 - P1: before a destructive write to a shared or human-owned fixture, take a
   snapshot of the original and confirm it can be retrieved. A later or deferred
   pass inherits the earlier pass's "not restorable" skips and never re-opens
-  them on its own. → test-data.md mutation discipline + run-modes.md (MINOR)
+  them on its own. → test-data.md mutation discipline + run-modes.md (MINOR) → APPLIED (v1.19.0)
 - P2: split the language rule. The report and the QA memory stay in English.
   Text filed into the team's tracker follows the tracker's language: ask once at
   kickoff and record the answer in the environment manifest. → SKILL.md
-  Language + qa-memory.md template (MINOR)
+  Language + qa-memory.md template (MINOR) → APPLIED (v1.19.0)
 - P2: add a fix-verification mode to run-modes.md. It covers:
   - the per-issue procedure above;
   - PARTIAL defined against the issue's expected behaviour;
   - the tracker updated per issue while the pass runs;
   - user-gated steps listed at design time and batched into one joint session.
-  (MINOR)
+  (MINOR) → APPLIED (v1.19.0)
 - P2: an executor brief must never grant an action that needs the user's
   approval (accepting terms or consent, payments, messages to real people). The
   lead cannot delegate a permission it does not hold. → run-modes.md
-  parallelising (MINOR)
+  parallelising (MINOR) → APPLIED (v1.19.0)
 - P3: a background poster checks whether its comment already exists before it
   posts. A new local finding id is read from the file at write time, never
-  taken from a brief. → run-modes.md / qa-memory.md (PATCH)
+  taken from a brief. → run-modes.md / qa-memory.md (PATCH) → APPLIED (v1.19.0)
 - Backlog: the earlier P3 proposals ("safe to call" manifest column,
   case-attributable asserts) stay OPEN. Neither recurred in this run.

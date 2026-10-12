@@ -3,6 +3,49 @@
 Semver. Every approved change is recorded here, along with which run's
 retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.19.0] — 2026-10-12
+
+Motivation: retrospective of the 2026-10-07 → 2026-10-12 runs (web app + backend
+API: fix-verification passes on tracker issues and a post-fix L3 regression,
+report-only). An executor wrote to the wrong account after the tooling renamed
+its browser handles; a deferred pass overwrote a fixture whose original could
+not be retrieved; a brief allowed an executor to accept a consent banner; a
+background poster posted comments twice; local finding ids collided; and every
+filed issue had to be rewritten because the tracker works in another language
+than the report. The verification procedure itself was improvised across four
+passes.
+
+### Added
+- `references/run-modes.md`: **fix-verification mode**. It covers:
+  - the issue's own expected behaviour as the basis;
+  - severity order;
+  - the per-issue checks: original repro, both sides of a new limit, the
+    original equivalence classes, side effects, and red before green for
+    concurrency claims;
+  - FIXED / PARTIAL / BLOCKED / NOT RUN verdicts;
+  - tracker updates per issue;
+  - user-gated steps batched into one joint session;
+  - tracing nearby events by entity id;
+  - a closing regression.
+  Listed under "Run modes beyond the default" in `SKILL.md` (P2).
+- `SKILL.md` Phase 2: check the signed-in identity before every write through a
+  session the tooling can rename or reassign; executors never select or switch
+  a lane's session (P1).
+- `SKILL.md` Phase 2 and `references/test-data.md`: before a destructive write
+  to a shared or human-owned fixture, snapshot the original and confirm it can
+  be retrieved. A deferred pass inherits earlier "not restorable" skips (P1).
+- `references/run-modes.md`: lanes are identified by the signed-in identity, not
+  by the tooling's handle (P1). Two new parallel-run rules: a brief cannot grant
+  a user-gated action (P2); anything an agent posts is idempotent, and new local
+  ids are read from the file at write time (P3).
+- `references/qa-memory.md`: a Tracker table in the environment manifest (the
+  language for filed text) and a rule for allocating `BUG-nnn` ids (P3).
+
+### Changed
+- `SKILL.md` Language: the report and QA memory stay in English. Text filed
+  into the team's tracker follows the team's working language, asked once at
+  kickoff and recorded in the manifest (P2).
+
 ## [1.18.0] — 2026-10-12
 
 Motivation: retrospective of the 2026-10-09 L3 run (backend API, a new read feed

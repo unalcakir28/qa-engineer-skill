@@ -32,6 +32,9 @@ are cheap to maintain (Phase 6, two minutes) and they compound.
   One report per run lands here; the root must stay six core files.
 - **Case IDs are suite-prefixed** (see `references/case-list.md`) so
   cross-references stay unambiguous as suites multiply.
+- **A new `BUG-nnn` id is read from the file at the moment of writing** (the
+  highest existing id + 1), never carried over from a brief or from memory.
+  Parallel writers otherwise collide.
 - **Every `known-issues.md` entry carries an `Alan:` (area) tag.** The file grows
   forever by design; when it passes ~30–40 entries, split it by area into
   `known-issues/<area>.md` + an index — the tags make that split mechanical
@@ -188,6 +191,11 @@ credentials live.
 | <account / tenant> | <2; one is empty> | <a member user with the second role> | <seed command / API call> |
 | <balance / quota> | <zero balance only> | <an account with a positive balance> | <script> |
 | <state machine record> | <draft, paid> | <expired, refunded> | <how to drive it to that state> |
+
+## Tracker
+| Tracker | Language for filed text | Who decided | Note |
+|---------|-------------------------|-------------|------|
+| <issue tracker> | <the team's working language> | <user, date> | report and `.qa/` stay in English |
 
 ## Known environment traps
 - <e.g. local timezone is UTC, staging isn't>

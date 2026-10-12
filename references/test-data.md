@@ -32,6 +32,11 @@ corrupts a later run, its name tells you which run and which agent made it.
 - "Restore" means restore, not approximate: reactivating a record you
   deactivated is easy to forget half of (dates, counters, derived totals).
   When restoration is fiddly, prefer a throwaway fixture instead.
+- Before an overwrite or delete on a fixture you did not create, snapshot the
+  original and check that the snapshot can be put back (a stored file still
+  resolves, a referenced object still exists). An original that only exists
+  behind a link the overwrite will break is not restorable. Use a throwaway
+  fixture instead, or leave the case `NOT RUN`.
 - After a run that mutated shared data unexpectedly, **re-seed rather than
   trust leftover state** — chasing FAILs caused by a previous scenario's
   footprints costs more than a fresh seed.
