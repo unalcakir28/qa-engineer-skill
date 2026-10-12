@@ -980,3 +980,89 @@ from the rotation (open, separate ticket) · **Verdict:** GO WITH RISK.
   a case that holds a lock on a row the writer needs after its insert, and check
   whether a row stamped inside a pulled window can stay invisible to it.
   → APPLIED (v1.18.0)
+
+## 2026-10-07 → 2026-10-12 · Focused + L3 · web app + backend API, fix-verification passes on tracker issues and a post-fix full regression (report-only)
+
+**Cases:** four fix-verification passes (≈130 issue re-runs) plus one L3
+regression of 655 rows · **Result:** every filed issue closed after 1–3
+verification rounds; the regression found 15 new verified findings (2 × S2,
+2 × S3, 11 × S4), all filed and later verified fixed · **Verdict:** no open
+finding left at the end.
+
+**What the structure caught:**
+
+- Anchoring the verdict to the issue's own expected behaviour, not to the
+  developer's description of the fix, turned four "fixed" claims into PARTIAL. In
+  each case the fix covered a narrower case than the issue described (a 500
+  removed but no limit added; one heading level fixed but a second one left;
+  some invisible-character classes still accepted; duplicates still stored). All
+  four got complete fixes in the next round.
+- Equivalence classes taken from the input's own taxonomy (character
+  categories, not a list of sample characters) found the classes that the
+  developer's regression set had missed.
+- The red recorded in an earlier run (three identical requests stored three
+  rows) made the later green under 20 parallel requests meaningful.
+- Boundary values on both sides, with multi-byte input, showed that the limit
+  counts bytes and not characters.
+
+**Cost/noise:**
+
+- Every finding and comment was written in English, which the skill's language
+  rule requires. The team's tracker works in another language, so all filed
+  issues and comments had to be rewritten afterwards.
+- An executor wrote to the wrong account for about two minutes. The tooling
+  had renamed the browser handles on reconnect, and the executor trusted the
+  handle instead of checking who was signed in. The change was restored.
+- A deferred pass picked up a case that the first executor had skipped as "not
+  restorable". It replaced a fixture whose original could not be retrieved
+  afterwards.
+- The lead's brief allowed an executor to accept a consent banner, which needs
+  the user's approval. The permission was revoked before it was used.
+- A background poster posted two verification comments twice.
+- Two local finding ids collided, because the next id was taken from the brief
+  instead of from the file.
+
+**Things I improvised that should be rules:**
+
+- A verification mode: re-run the original repro, test both sides of the new
+  boundary, give a FIXED / PARTIAL / BLOCKED verdict, and post a "fixed / still
+  open + repro" comment per issue while the pass runs, in severity order.
+- Steps that only the user can do (a real payment, a consent tick, a ban) were
+  batched into one joint session, with numbered instructions and a DB check
+  after each step.
+- An unexpected review event next to the action under test was traced by
+  entity id to a scheduled job before any conclusion was drawn.
+
+**Non-negotiables strained:** none broken. Red-green for a user-gated
+concurrency claim needed the user's approval before the green could be
+measured. Asking first worked, and nothing was faked.
+
+**Proposals (PROPOSAL — awaiting approval):**
+
+- P1: in a lane whose handle the tooling can rename or reassign (reconnects,
+  profile switches), check the signed-in identity before every write, not once
+  per session. Also forbid executors to select or switch the lane themselves. →
+  SKILL.md Phase 2 + run-modes.md (MINOR)
+- P1: before a destructive write to a shared or human-owned fixture, take a
+  snapshot of the original and confirm it can be retrieved. A later or deferred
+  pass inherits the earlier pass's "not restorable" skips and never re-opens
+  them on its own. → test-data.md mutation discipline + run-modes.md (MINOR)
+- P2: split the language rule. The report and the QA memory stay in English.
+  Text filed into the team's tracker follows the tracker's language: ask once at
+  kickoff and record the answer in the environment manifest. → SKILL.md
+  Language + qa-memory.md template (MINOR)
+- P2: add a fix-verification mode to run-modes.md. It covers:
+  - the per-issue procedure above;
+  - PARTIAL defined against the issue's expected behaviour;
+  - the tracker updated per issue while the pass runs;
+  - user-gated steps listed at design time and batched into one joint session.
+  (MINOR)
+- P2: an executor brief must never grant an action that needs the user's
+  approval (accepting terms or consent, payments, messages to real people). The
+  lead cannot delegate a permission it does not hold. → run-modes.md
+  parallelising (MINOR)
+- P3: a background poster checks whether its comment already exists before it
+  posts. A new local finding id is read from the file at write time, never
+  taken from a brief. → run-modes.md / qa-memory.md (PATCH)
+- Backlog: the earlier P3 proposals ("safe to call" manifest column,
+  case-attributable asserts) stay OPEN. Neither recurred in this run.
