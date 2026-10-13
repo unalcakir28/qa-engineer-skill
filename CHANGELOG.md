@@ -3,6 +3,22 @@
 Semver. Every approved change is recorded here, along with which run's
 retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.20.0] — 2026-10-13
+
+Motivation: retrospective of the 2026-10-13 run (L3, backend API, fix mode). The
+run used a QA bootstrap that skips the credential signature check; four case
+rows across three parallel executors came back as 5xx or BLOCKED because every
+malformed or non-session credential reached the bypassed check, until the lead
+started a second instance without the bootstrap. The same false finding was
+already logged on 2026-10-06, so the lesson recurred.
+
+### Changed
+
+- **Phase 0, access playbook:** when a run relies on a bootstrap that bypasses
+  the credential check, a second instance without it is planned at design time,
+  and every case whose input is the credential itself is assigned to that
+  instance in Phase 1 and named in the executor brief.
+
 ## [1.19.0] — 2026-10-12
 
 Motivation: retrospective of the 2026-10-07 → 2026-10-12 runs (web app + backend

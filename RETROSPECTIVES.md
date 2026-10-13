@@ -1066,3 +1066,41 @@ measured. Asking first worked, and nothing was faked.
   taken from a brief. → run-modes.md / qa-memory.md (PATCH) → APPLIED (v1.19.0)
 - Backlog: the earlier P3 proposals ("safe to call" manifest column,
   case-attributable asserts) stay OPEN. Neither recurred in this run.
+
+
+## 2026-10-13 · L3 · backend API, new credential type on existing routes (fix mode)
+
+**Cases:** 101 (14 from the cold review) · **Result:** 9 verified findings
+(0 × S1, 0 × S2, 3 × S3, 6 × S4); 4 fixed red → green or in docs during the run.
+
+**What the structure caught:**
+
+- The cold review again produced every defect the change itself introduced
+  (rolling-deploy window, an accepted-but-unparseable date form, docs claims).
+  The lead wrote the change and had none of them in the first list.
+- A/B against the pre-change build turned the two reach-widened defects into
+  measured pre-existing ones, which the release-gate attribution rule then put
+  back on the change's account because the change widened their reach.
+- A service-level harness with a delayed dependency reproduced a cache race
+  10/10 on both builds and 0/10 after the fix, with a no-delay control proving
+  the harness could tell the difference.
+
+**Cost/noise:**
+
+- Four rows in three lanes went 5xx/BLOCKED on the bootstrap until the lead
+  started a non-bootstrapped instance (recurrence of the 2026-10-06 lesson).
+- A shared HTTP helper sent a JSON content type on bodiless requests, so a
+  framework rejected them before any guard ran (two executors hit it).
+
+**Things I improvised that should be rules:** planning the non-bootstrapped
+instance up front (now a rule).
+
+**Non-negotiable strained:** #6 — design independence again came only from the
+cold reviewer.
+
+**Proposals:**
+
+- P1 (recurring) — plan a non-bypassed instance at design time for every
+  credential-shape case → SKILL.md Phase 0 (MINOR) → APPLIED (v1.20.0)
+- Backlog: the earlier P3 proposals ("safe to call" manifest column,
+  case-attributable asserts) stay OPEN; neither recurred.
