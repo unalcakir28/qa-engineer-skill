@@ -1,6 +1,6 @@
 ---
 name: qa-engineer
-version: 1.20.0
+version: 1.21.0
 description: Act as the project's QA engineer before a change ships - risk analysis, a numbered case list designed with real test techniques (boundary values, equivalence classes, decision tables, pairwise), execution across functional, negative, boundary, permission, state, concurrency, data-integrity, resilience and security categories, every finding verified, closing with a severity-ranked report and a GO / NO-GO verdict. Use whenever the user asks to test, verify, validate, QA, break, stress, regression-check or pre-release review a feature, endpoint, screen, CLI command or change - including Turkish phrasings like "test et", "kapsamli test", "kirmaya calis", "QA yap" - and whenever you have just implemented something and are about to verify it. The default depth is a full sweep, not happy-path.
 ---
 
@@ -534,6 +534,14 @@ working blind or losing your place halfway.
   different error body). State your suspicion, prove it, then either fix the
   harness and re-run or report the real bug. A validation 400 mistaken for a
   business 400 produces a confidently wrong finding.
+- **Compare values as values in an oracle, never as reformatted strings.** When
+  a harness checks what the system returned against the source of truth, parse
+  both sides into a type that holds the value exactly (an arbitrary-precision
+  decimal for amounts, a parsed instant for timestamps, a key-sorted structure
+  for objects) and compare those. Normalising text instead (stripping trailing
+  zeros, reformatting a date, serialising objects in insertion order) breaks on
+  the first input the normaliser did not foresee and produces FAILs that are the
+  harness's own.
 - **Follow the smell.** When something looks off, stop marching through the
   list and dig: shrink the case to the minimal reproduction, vary one input at
   a time, find the boundary where behaviour flips. Then append the new cases you

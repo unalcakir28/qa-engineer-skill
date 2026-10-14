@@ -3,6 +3,18 @@
 Semver. Every approved change is recorded here, along with which run's
 retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.21.0] — 2026-10-14
+
+Motivation: retrospective of the 2026-10-14 run (L2, backend API, fix mode).
+Four of the run's six fake FAILs came from one oracle helper that compared
+returned amounts with stored decimals by stripping trailing zeros from text,
+which also stripped the zeros of whole numbers, and compared objects by their
+serialised key order.
+
+### Added
+- Phase 2: compare values as values in an oracle (exact decimal type, parsed
+  instant, key-sorted structure), never as reformatted strings.
+
 ## [1.20.0] — 2026-10-13
 
 Motivation: retrospective of the 2026-10-13 run (L3, backend API, fix mode). The

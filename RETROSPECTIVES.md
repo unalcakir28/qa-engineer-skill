@@ -1104,3 +1104,34 @@ cold reviewer.
   credential-shape case → SKILL.md Phase 0 (MINOR) → APPLIED (v1.20.0)
 - Backlog: the earlier P3 proposals ("safe to call" manifest column,
   case-attributable asserts) stay OPEN; neither recurred.
+
+## 2026-10-14 · L2 · backend API, new read-only report endpoint (fix mode)
+
+**What the structure caught:**
+
+- The negative/validation row produced the only product defect found: an
+  impossible calendar date accepted and silently rolled over by the shared date
+  validation. Measuring it on unchanged neighbour routes turned "pre-existing"
+  into a measurement without a baseline build of a route that did not exist.
+- The claims oracle on the change's own documentation caught a field described
+  narrower than the data shows.
+- The cold review added 11 cases and corrected 6 expectations (unanchored status
+  codes, an offset-less date read as UTC, a fixture-specific count).
+
+**Cost/noise:**
+
+- Six fake FAILs: four from one oracle helper (decimal text normalisation and
+  object key order), one from a misread field name in a neighbour response, one
+  from an expectation about a non-standard year form.
+
+**Things I improvised that should be rules:** comparing exact decimals by value
+in the oracle (now a rule).
+
+**Non-negotiable strained:** none.
+
+**Proposals:**
+
+- P2 — compare values as values in an oracle → SKILL.md Phase 2 (MINOR) →
+  APPLIED (v1.21.0)
+- Backlog: the earlier P3 proposals stay OPEN; neither recurred.
+
