@@ -3,6 +3,21 @@
 Semver. Every approved change is recorded here, along with which run's
 retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.23.0] — 2026-10-20
+
+Motivation: retrospective of the 2026-10-20 run (L2 with L3 depth, backend
+API, heavy queries, unattended). The first A/B pass compared the ordered output
+of a query with no ORDER BY. Another executor ran `ANALYZE` on the shared
+database during the run, so the same code produced both "0 differences" and
+"2340 differences".
+
+### Added
+- `references/techniques.md` §11: check that the output has a total order
+  before an A/B comparison; otherwise compare result sets, and report the order
+  as its own finding when paging or a tie-break depends on it.
+- `references/run-modes.md`: an executor announces any plan-changing command
+  (`ANALYZE`, planner settings, index DDL) on a shared database, with the time.
+
 ## [1.22.0] — 2026-10-20
 
 Motivation: retrospective of the 2026-10-19 run (L3, backend API, money ledger,

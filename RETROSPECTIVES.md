@@ -1175,3 +1175,10 @@ cold reviewer.
   so; the proposal rested on a misreading. CLOSED, no change.
 - Backlog: the earlier P3 proposals stay OPEN; neither recurred.
 
+
+## 2026-10-20 — heavy queries (L2 + L3 depth, unattended)
+
+- **Caught by structure:** the cold review produced 3 of the 4 defects (a lenient numeric parse feeding a destructive job, a cursor written before its batch, an unvalidated cursor) — the lead wrote the change (non-negotiable #6 held again).
+- **Noise:** the first A/B pass compared ordered output of a query with no ORDER BY; the baseline's own order changed after an `ANALYZE` another executor ran mid-run, so "0 differences" and "2340 differences" were both produced by the same code.
+- **PROPOSAL (minor) → APPLIED (v1.23.0):** in `references/techniques.md` §11 (differential runs), add: "Before an A/B comparison of a query's output, check that the query has a total order. Without one, compare result sets, and treat the order as its own finding if a page boundary or a tie-break depends on it — a change that alters the plan can reshuffle it even though both builds are 'correct'."
+- **PROPOSAL (patch) → APPLIED (v1.23.0):** in `references/run-modes.md`, executors that run `ANALYZE` (or any statistics/plan-changing command) on a shared database must say so, because it invalidates other lanes' plan-dependent results.

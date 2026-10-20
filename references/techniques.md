@@ -218,6 +218,13 @@ request path, run the builds **one at a time** — stop one before starting the
 other — or give each its own broker namespace, and say in the report which you
 did. Synchronous probes can still run in parallel.
 
+**Check that the output has a total order before comparing it.** A query or
+list without a deterministic order returns rows in whatever order the plan
+produces, and a change that alters the plan can reshuffle them even though both
+builds are correct. Without a total order, compare result *sets*, not ordered
+output. Treat the order itself as a separate finding when a page boundary or a
+tie-break depends on it.
+
 It does not always apply — a brand-new feature has nothing to compare against,
 the two versions may not be able to share a schema, and running old code against
 a migrated database can corrupt it. Say which of those ruled it out; don't drop

@@ -115,7 +115,7 @@ time.
   every write, and the executor stops if it does not match. Executors never
   select, switch or re-attach a lane's session.
 
-Seven rules that keep a parallel run honest:
+Eight rules that keep a parallel run honest:
 
 - **Each agent seeds its own isolated fixture set** (own org/tenant/user/records,
   prefixed identifiers). Parallel agents must never share mutable test data — one
@@ -123,6 +123,11 @@ Seven rules that keep a parallel run honest:
   the resulting FAILs look exactly like real bugs. If a group *must* mutate
   shared or global state (DDL, config, a shared counter), run that group alone,
   not in parallel.
+- **Plan-changing commands are announced.** An executor that runs `ANALYZE`,
+  changes planner settings, or builds or drops an index on a shared database
+  says so in its evidence, with the time. These commands change the plans the
+  other lanes measure, and every plan-dependent result after that moment has to
+  be re-checked. Run them in a lane of their own, or on a scratch database.
 - **A mutant touches only its executor's own fixtures.** A deliberately broken
   copy of a guard runs inside the executor's own process, but what it writes lands
   in the shared store. If the mutated component scans or schedules over shared
