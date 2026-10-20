@@ -3,6 +3,22 @@
 Semver. Every approved change is recorded here, along with which run's
 retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.22.0] — 2026-10-20
+
+Motivation: retrospective of the 2026-10-19 run (L3, backend API, money ledger,
+fix mode). Another session's instance consumed the target's queues from the
+shared database and broker, so several asynchronous re-runs observed old code
+while the target itself looked healthy. Separately, two of the run's defects
+were one identifier matched exactly on one path and case-insensitively on its
+siblings.
+
+### Added
+- Phase 2: before trusting an asynchronous result, check who else consumes the
+  same data store and queues; with a foreign consumer, verify below the queue
+  and leave the other process alone.
+- `references/edge-data.md`: the same identifier in another letter case or form,
+  with when it matters and what to do with it.
+
 ## [1.21.0] — 2026-10-14
 
 Motivation: retrospective of the 2026-10-14 run (L2, backend API, fix mode).

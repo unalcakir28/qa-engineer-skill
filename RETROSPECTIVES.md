@@ -1135,3 +1135,43 @@ in the oracle (now a rule).
   APPLIED (v1.21.0)
 - Backlog: the earlier P3 proposals stay OPEN; neither recurred.
 
+## 2026-10-19 · L3 · backend API, money ledger across existing credit and debit paths (fix mode)
+
+**Cases:** 139 (14 from the cold review) · **Result:** 6 verified findings
+(0 × S1, 1 × S2, 4 × S3, 1 × S4); all fixed red → green, two after product
+decisions.
+
+**What the structure caught:**
+
+- A/B on baseline classes with a real database measured a pre-existing lock-order
+  inversion that the change turned from 0/50 to 50/50 deadlocks; the release-gate
+  attribution rule put it on the change.
+- Mutant red runs (raised isolation level, ledger write moved before the balance
+  write) proved the concurrency harness could fail before its green was trusted.
+- The cold review again produced defects the change introduced, run before
+  execution as the skill already requires.
+
+**Cost/noise:**
+
+- Another session's instance consumed the shared queues; four asynchronous
+  re-runs observed old code and had to be re-verified below the queue.
+- Fixtures created "legacy" state with a current creation time, which a later fix
+  made meaningful; the harness had to backdate them.
+
+**Things I improvised that should be rules:** listing foreign consumers of the
+shared store before trusting an asynchronous result (now a rule).
+
+**Non-negotiable strained:** #6 — design independence again came only from the
+cold reviewer.
+
+**Proposals:**
+
+- P2 — check foreign consumers of the shared store and queues before trusting an
+  asynchronous result → SKILL.md Phase 2 (MINOR) → APPLIED (v1.22.0)
+- P3 — identifier in another letter case or form as an edge-data row →
+  references/edge-data.md (MINOR, with the above) → APPLIED (v1.22.0)
+- Proposed then withdrawn: "move the cold review to design time". The skill
+  already places it after the case list and before execution, and this run did
+  so; the proposal rested on a misreading. CLOSED, no change.
+- Backlog: the earlier P3 proposals stay OPEN; neither recurred.
+

@@ -1,6 +1,6 @@
 ---
 name: qa-engineer
-version: 1.21.0
+version: 1.22.0
 description: Act as the project's QA engineer before a change ships - risk analysis, a numbered case list designed with real test techniques (boundary values, equivalence classes, decision tables, pairwise), execution across functional, negative, boundary, permission, state, concurrency, data-integrity, resilience and security categories, every finding verified, closing with a severity-ranked report and a GO / NO-GO verdict. Use whenever the user asks to test, verify, validate, QA, break, stress, regression-check or pre-release review a feature, endpoint, screen, CLI command or change - including Turkish phrasings like "test et", "kapsamli test", "kirmaya calis", "QA yap" - and whenever you have just implemented something and are about to verify it. The default depth is a full sweep, not happy-path.
 ---
 
@@ -478,6 +478,14 @@ working blind or losing your place halfway.
   the run and before every re-run after a rebuild: who owns the port, and since
   when. A stale instance left over from an earlier run serves old code without
   any sign of it, and a rebuild does not always replace the running process.
+  **Then check who else consumes the same data store and queues.** On a shared
+  environment another instance (another session's build, an old checkout) can
+  connect to the same database and broker and take jobs off the same queues. The
+  target then looks healthy while part of its asynchronous work runs code that is
+  not under test. Before trusting an asynchronous result, list every process
+  connected to the same store or broker. With a foreign consumer present, verify
+  at a level that does not go through the queue, and leave that process alone:
+  it is not yours to stop.
 - **Update the file as you go**, case by case: status + evidence on each row, not
   a batch write at the end. If the run is interrupted, the file shows exactly
   where it stopped and what's left.
