@@ -1182,3 +1182,25 @@ cold reviewer.
 - **Noise:** the first A/B pass compared ordered output of a query with no ORDER BY; the baseline's own order changed after an `ANALYZE` another executor ran mid-run, so "0 differences" and "2340 differences" were both produced by the same code.
 - **PROPOSAL (minor) → APPLIED (v1.23.0):** in `references/techniques.md` §11 (differential runs), add: "Before an A/B comparison of a query's output, check that the query has a total order. Without one, compare result sets, and treat the order as its own finding if a page boundary or a tie-break depends on it — a change that alters the plan can reshuffle it even though both builds are 'correct'."
 - **PROPOSAL (patch) → APPLIED (v1.23.0):** in `references/run-modes.md`, executors that run `ANALYZE` (or any statistics/plan-changing command) on a shared database must say so, because it invalidates other lanes' plan-dependent results.
+
+
+## 2026-10-21 — SAP balance sources (L2, unattended under ship-check)
+
+- **Caught by structure:** the cold review found the four doc defects (BUG-122); the lead wrote the change and had written the docs from the same mental model (non-negotiable #6 again). The v1.23.0 total-order rule made the one A/B order flip read as a pre-existing risk at once instead of a regression.
+- **Noise:** a basis-level invariant classified rows by a nullable response field ("no `payment` object means a swap fee") and produced 41 fake FAILs; the real discriminator was a database column the response does not expose.
+- **PROPOSAL (patch) — awaiting approval:** in `references/oracles.md` or `references/test-data.md`, add: "An invariant that classifies rows must use the discriminator the system itself uses (a type or foreign-key column in the source of truth), not the absence of an optional field in the response. Seeded and legacy rows break absence-based rules first."
+
+## 2026-10-21 — web frontend, small UI + client upgrade (L2, under ship-check)
+
+- **Cases:** 35 (5 from cold review) · **Result:** 25 PASS / 1 FAIL (S4, open) / 8 BLOCKED / 1 NOT RUN · **Verdict:** GO WITH RISK.
+- **Caught by structure:** the cold review added the whitespace-only payload case that produced the only finding, and the red-green rule (mutating each changed branch) proved 12 new tests could actually fail.
+- **Noise:** the live-browser lane was designed in full (8 cases) and only then discovered unreachable — the in-app browser refused the local HTTPS dev host. The cases were correctly BLOCKED, but the design time was spent before the probe.
+- **PROPOSAL (patch) — awaiting approval:** in Phase 0 "environment capability inventory", add: "Probe the execution surface itself before designing cases for it — open the target URL once with the browser/tool the run will use. A refused navigation (certificate, approval, sign-in) turns every case on that surface into `BLOCKED (environment)` at design time, not mid-run." (P3)
+
+## 2026-10-21 — web frontend, wizard error routing (L2, under ship-check)
+
+- **Cases:** 37 + 8 regression · **Result:** 36 PASS / 1 FAIL (S3, fixed in the same pipeline) · **Verdict:** GO WITH RISK.
+- **Caught by structure:** the cold review (mandatory when the author designs the cases) added the "user leaves while the request is pending" case that produced the only finding.
+- **Noise:** two harness artefacts: removing framework-managed toast nodes blanked the app; a positional field pick targeted the wrong field of a real record (caught on the review screen).
+- **PROPOSAL (patch) — applied in v1.24.0:** write targets by a stable attribute and read back before a real write (`references/test-data.md`).
+- **PROPOSAL (patch) — applied in v1.24.0:** observe UI state, never reset it by removing framework-managed nodes (Phase 2).

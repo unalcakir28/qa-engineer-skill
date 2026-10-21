@@ -37,6 +37,14 @@ corrupts a later run, its name tells you which run and which agent made it.
   resolves, a referenced object still exists). An original that only exists
   behind a link the overwrite will break is not restorable. Use a throwaway
   fixture instead, or leave the case `NOT RUN`.
+- **Aim a real write by a stable attribute, then read it back before
+  submitting.** Select the field a write targets by something that names it (a
+  `name`, a label, a test id), never by position or by a selector that assumes
+  markup the app may not have: field order differs between record variants, and
+  a positional pick lands on the neighbouring field without an error. Before a
+  write to shared or real data goes out, read back what the system says will
+  change (a review or diff screen, the outgoing request body) and compare it with
+  the change that was approved. A mismatch stops the case before the write.
 - After a run that mutated shared data unexpectedly, **re-seed rather than
   trust leftover state** — chasing FAILs caused by a previous scenario's
   footprints costs more than a fresh seed.

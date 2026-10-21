@@ -3,6 +3,21 @@
 Semver. Every approved change is recorded here, along with which run's
 retrospective it came from. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.24.0] — 2026-10-21
+
+Motivation: retrospective of the 2026-10-21 run (L2, web frontend, under
+ship-check). A field picked by position nearly saved a change to the wrong field
+of a real record; it was caught on the review screen before saving. Separately,
+the harness removed leftover toast nodes to reset state, which blanked the app
+and could have been reported as a crash.
+
+### Added
+- `references/test-data.md`, mutation discipline: aim a real write by a stable
+  attribute, never by position, and read back what will change before
+  submitting it.
+- Phase 2: observe UI state instead of resetting it by removing nodes the UI
+  framework manages.
+
 ## [1.23.0] — 2026-10-20
 
 Motivation: retrospective of the 2026-10-20 run (L2 with L3 depth, backend
